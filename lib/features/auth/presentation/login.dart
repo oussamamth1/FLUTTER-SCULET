@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:zenifytrip_guide/features/auth/presentation/providers/auth_provider.dart';
 
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+import 'package:go_router/go_router.dart';
+
+class LoginScreen extends ConsumerWidget {
+  LoginScreen({super.key});
+
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
 
   @override
-  Widget build(BuildContext context) {
-    final TextEditingController emailController = TextEditingController();
-    final TextEditingController passwordController = TextEditingController();
-
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-      ),
+      appBar: AppBar(title: const Text('Login'),automaticallyImplyLeading:false),
       body: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -23,7 +25,6 @@ class LoginScreen extends StatelessWidget {
                 labelText: 'Email',
                 border: OutlineInputBorder(),
               ),
-              keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16),
             TextField(
@@ -38,11 +39,18 @@ class LoginScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // TODO: Implement login logic
+                onPressed: () async {
                   final email = emailController.text;
                   final password = passwordController.text;
-                  // Example: print('Email: $email, Password: $password');
+                  await ref.read(authProvider.notifier).login(email, password);
+
+                  if (ref.read(authProvider.notifier).isLoggedIn) {
+                    GoRouter.of(context).go('/');
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Invalid credentials')),
+                    );
+                  }
                 },
                 child: const Text('Login'),
               ),

@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:zenifytrip_guide/provider/location_provider.dart';
 import 'package:zenifytrip_guide/theme.dart';
+import 'package:go_router/go_router.dart';
 
 void main() async{
     WidgetsFlutterBinding.ensureInitialized();

@@ -112,7 +112,7 @@ final taskService = TaskService();
           // Enhanced styling properties
        
           // Badge configuration with improved positioning
-          //badgeMargin: const EdgeInsets.only(top: 8, right: 4),
+          badgeMargin: const EdgeInsets.only(bottom: 30, right: 40),
           badgeColor: _badgeColor,
           badgeTextColor: Colors.white,
           

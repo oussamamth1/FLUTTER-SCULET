@@ -36,7 +36,7 @@ class _ExplorePageState extends State<ExplorePage> {
   void _onMapTapped(LatLng tappedPoint, LocationProvider model) {
     print('Map tapped at: ${tappedPoint.latitude}, ${tappedPoint.longitude}');
     model.addDestinationMarker(tappedPoint);
-    model.createTrackingLine(tappedPoint);
+    model.createTrackingLine(tappedPoint,Colors.red);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -52,12 +52,16 @@ class _ExplorePageState extends State<ExplorePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title: SearchWidget().search,
-        centerTitle: true,
-        elevation: 0,
-      ),
+    appBar: AppBar(
+  backgroundColor: Colors.transparent,
+  title: SearchWidget(
+    onChanged: (query) {
+      Provider.of<LocationProvider>(context, listen: false).updateSearch(query, context);
+    },
+  ),
+  centerTitle: true,
+  elevation: 0,
+),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           locationProvider.clearTracking();

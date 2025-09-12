@@ -13,62 +13,69 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:zenifytrip_guide/provider/location_provider.dart';
 import 'package:zenifytrip_guide/theme.dart';
 import 'package:go_router/go_router.dart';
+import 'package:zenify_auth/zenify_auth.dart' as zenifyAuth;
 
-void main() async{
-    WidgetsFlutterBinding.ensureInitialized();
-      await Hive.initFlutter();
-      await Hive.openBox('authBox');
-    usePathUrlStrategy(); // ✅ No hash in URLs
-     // Register the Task adapter
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  await Hive.openBox('authBox');
+  usePathUrlStrategy(); // ✅ No hash in URLs
+  // Register the Task adapter
   Hive.registerAdapter(TaskAdapter());
-   AppEnvironment.setupEnv(Environment.tunisie);
+  AppEnvironment.setupEnv(Environment.sunshine);
   WidgetsFlutterBinding.ensureInitialized();
 
+  //   if (Firebase.apps.isEmpty) {
+  //     await Firebase.initializeApp(
+  //       //ios add name
+  //  name: "TUNISIEPROMO",
+  //       options: DefaultFirebaseOptions.currentPlatform,
+  //     );
+  //   } else {
+  //     Firebase.app(); // Get the default app
+  //   }
 
-//   if (Firebase.apps.isEmpty) {
-//     await Firebase.initializeApp(
-//       //ios add name
-//  name: "TUNISIEPROMO",
-//       options: DefaultFirebaseOptions.currentPlatform,
-//     );
-//   } else {
-//     Firebase.app(); // Get the default app
-//   }
+  zenifyAuth.ZenifyAuth.initialize(
+    baseUrl: "https://api.staging.zenifytrip.com", // project-specific URL
+    fromJson: (json) => zenifyAuth.User.fromJson(json),
+  );
 
-  await SocketIOManager.instance.initSocket();
+  //  await SocketIOManager.instance.initSocket();
   // Initialize TaskService
   final taskService = TaskService();
   await taskService.init();
-runApp(
-    ProviderScope( // Riverpod root
-      child: pro.MultiProvider( // Classic provider root
+  runApp(
+    ProviderScope(
+      // Riverpod root
+      child: pro.MultiProvider(
+        // Classic provider root
         providers: [
           pro.ChangeNotifierProvider(
-          create: (context) => LocationProvider(),
-          child: GoogleMapPage(),
-        )
+            create: (context) => LocationProvider(),
+            child: GoogleMapPage(),
+          ),
         ],
         child: MyApp(),
       ),
     ),
   );
 }
+//final authRepo = zenifyAuth.ZenifyAuth.authRepo; // ✅ correct usage
 
 class MyApp extends ConsumerWidget {
-   MyApp({super.key});
+  MyApp({super.key});
 
   // This widget is the root of your application.
 
-
-Widget build(BuildContext context,WidgetRef ref) {
-  final _router = AppRoutConfig.returnRouter(ref);
-  return MaterialApp.router(theme: AppEnvironment.lightTheme,
-    title: 'ZenifyTrip Guide',
+  Widget build(BuildContext context, WidgetRef ref) {
+    final _router = AppRoutConfig.returnRouter(ref);
+    return MaterialApp.router(
+      theme: AppEnvironment.lightTheme,
+      title: 'ZenifyTrip Guide',
 
       debugShowCheckedModeBanner: false,
       restorationScopeId: null, // Disable restoration to avoid the error
       routerConfig: _router, // 👈 This is enough! Remove parser/delegate
-  );
+    );
+  }
 }
-}
-

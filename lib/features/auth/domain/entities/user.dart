@@ -43,7 +43,17 @@ class User extends HiveObject {
   @HiveField(12)
   final String? bio;
 
+  @HiveField(13)
+  final String? token;
+
+  @HiveField(14)
+  final String? id;
+
+  @HiveField(15)
+  final String? role;
+
   User({
+    this.id,
     this.email,
     this.password,
     this.phoneNumber,
@@ -57,5 +67,36 @@ class User extends HiveObject {
     this.country,
     this.zipCode,
     this.bio,
+    this.token,
+    this.role,
   });
+
+  // ✅ fromJson for API responses (extract nested 'data' if needed)
+  factory User.fromJson(Map<String, dynamic> json) {
+    // If the API returns a top-level 'data' object
+    final data = json['data'] ?? json;
+
+    return User(
+      id: data['id'] ?? '',
+      email: data['email'] ?? '',
+      firstName: data['firstName'],
+      lastName: data['lastName'],
+      phoneNumber: data['phone'] ?? '',
+      role: data['role'],
+      token: json['access_token'] ?? '', // token is outside 'data'
+      // Other fields can be mapped here if returned by API
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'email': email,
+      'firstName': firstName,
+      'lastName': lastName,
+      'phone': phoneNumber,
+      'role': role,
+      'token': token,
+    };
+  }
 }

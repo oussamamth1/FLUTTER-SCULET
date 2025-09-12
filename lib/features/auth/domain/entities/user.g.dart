@@ -30,6 +30,8 @@ class UserAdapter extends TypeAdapter<User> {
       country: fields[10] as String?,
       zipCode: fields[11] as String?,
       bio: fields[12] as String?,
+      token: fields[13] as String?,
+      id: fields[14] as String?,
     );
   }
 
@@ -62,7 +64,10 @@ class UserAdapter extends TypeAdapter<User> {
       ..writeByte(11)
       ..write(obj.zipCode)
       ..writeByte(12)
-      ..write(obj.bio);
+      ..write(obj.bio)..writeByte(13)
+      ..write(obj.token)
+      ..writeByte(14)
+      ..write(obj.id);
   }
 
   @override

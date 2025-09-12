@@ -94,7 +94,7 @@ static ThemeData _buildZenifyLightTheme() {
     ),
 
     // Card Styling
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: BaseColors.white,
       elevation: 2,
       shadowColor: ZenifyColors.primaryOrange.withOpacity(0.15),
@@ -105,7 +105,7 @@ static ThemeData _buildZenifyLightTheme() {
     ),
 
     // Bottom App Bar
-    bottomAppBarTheme: BottomAppBarTheme(
+    bottomAppBarTheme: BottomAppBarThemeData(
       color: ZenifyColors.primaryOrange,
       elevation: 6.0,
       shape: const CircularNotchedRectangle(),
@@ -213,7 +213,7 @@ static ThemeData _buildZenifyLightTheme() {
   // TunisiePromo Light Theme (example)
   static ThemeData _buildTunisiePromoLightTheme() {
     return ThemeData(
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: TunisiePromoColors.cardLight,
         elevation: 2,
         shadowColor: TunisiePromoColors.primary.withOpacity(0.2),
@@ -310,7 +310,7 @@ static ThemeData _buildZenifyLightTheme() {
   // Default Light Theme
   static ThemeData _buildDefaultLightTheme() {
     return ThemeData(
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: DefaultColors.cardLight,
         elevation: 2,
         shadowColor: DefaultColors.mediumGray.withOpacity(0.3),

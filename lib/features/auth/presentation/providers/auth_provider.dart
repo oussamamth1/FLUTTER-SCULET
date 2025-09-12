@@ -12,6 +12,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 // StateNotifier for auth
 class AuthNotifier extends StateNotifier<User?> {
   final AuthRepository repository;
+
   AuthNotifier(this.repository) : super(null) {
     checkLogin();
   }
@@ -19,14 +20,17 @@ class AuthNotifier extends StateNotifier<User?> {
   Future<void> checkLogin() async {
     final loggedIn = await repository.isLoggedIn();
     if (loggedIn) {
-      final email = Hive.box('authBox').get('userEmail', defaultValue: 'user@example.com');
-      state = User(email: email);
+      final box = Hive.box('authBox');
+      final email = box.get('userEmail', defaultValue: '');
+      final token = box.get('authToken');
+      state = User(email: email, token: token);
     }
   }
 
   Future<void> login(String email, String password) async {
     final user = await repository.login(email, password);
-    state = user;
+    state = user; // UI can check if null for errors
+    print("// UI Future<void> login( can check if null for errors");
   }
 
   Future<void> logout() async {
@@ -35,6 +39,14 @@ class AuthNotifier extends StateNotifier<User?> {
   }
 
   bool get isLoggedIn => state != null;
+
+  // 🔥 New: fetch full profile
+  Future<void> fetchUserProfile() async {
+    final profile = await repository.getUserProfile();
+    if (profile != null) {
+      state = profile;
+    }
+  }
 }
 
 // Provider

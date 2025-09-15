@@ -22,7 +22,7 @@ void main() async {
   usePathUrlStrategy(); // ✅ No hash in URLs
   // Register the Task adapter
   Hive.registerAdapter(TaskAdapter());
-  AppEnvironment.setupEnv(Environment.sunshine);
+  AppEnvironment.setupEnv(Environment.tunisie);
   WidgetsFlutterBinding.ensureInitialized();
 
   //   if (Firebase.apps.isEmpty) {

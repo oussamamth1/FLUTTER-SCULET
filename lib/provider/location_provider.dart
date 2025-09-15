@@ -8,6 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:geolocator/geolocator.dart' as ge;
 import 'package:http/http.dart' as http;
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:zenifytrip_guide/pages/profile_page.dart';
 import 'package:zenifytrip_guide/project/routes/app_rout_const.dart';
 
@@ -44,6 +45,12 @@ class LocationProvider with ChangeNotifier {
   List<Map<String, dynamic>> _allPeople = [];
 
   String _searchQuery = "";
+
+  // 🗺️ Initialize PolylinePoints with your Google Maps API key
+  late PolylinePoints polylinePoints;
+  
+  // Replace with your actual Google Maps API key
+  static const String _googleMapsApiKey = "AIzaSyBiE7onmrq11reD-hX0aNi4ouxNKzue_WQ";
 
   // 🔎 Update search query and re-apply filter
   void updateSearch(String query, BuildContext context) {
@@ -104,9 +111,9 @@ class LocationProvider with ChangeNotifier {
                     Text("Job : ${item['jobtype']}"),
                     const SizedBox(height: 12),
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.pop(context);
-                        createTrackingLine(position, Colors.green);
+                        await createRoutingLine(position, Colors.green);
                         _destinationPosition = position;
                         _marker!.remove(destinationMarkerId);
                       },
@@ -216,9 +223,9 @@ class LocationProvider with ChangeNotifier {
                       Text("Job : ${item['jobtype']}"),
                       const SizedBox(height: 12),
                       ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
                           Navigator.pop(context);
-                          createTrackingLine(position, Colors.green);
+                          await createRoutingLine(position, Colors.green);
                           _destinationPosition = position;
                           _marker!.remove(destinationMarkerId);
                         },
@@ -243,6 +250,8 @@ class LocationProvider with ChangeNotifier {
   LocationProvider() {
     _location = Location();
     _marker = <MarkerId, Marker>{};
+    // Initialize PolylinePoints with your Google Maps API key
+    polylinePoints = PolylinePoints(apiKey: "AIzaSyBiE7onmrq11reD-hX0aNi4ouxNKzue_WQ",defaultTimeout: Duration(seconds: 60));
   }
 
   // ⚡ Initialize
@@ -312,19 +321,69 @@ class LocationProvider with ChangeNotifier {
       draggable: true,
       infoWindow: const InfoWindow(title: 'Destination'),
       onTap: () => debugPrint('Destination marker tapped'),
-      onDragEnd: (LatLng newPosition) {
+      onDragEnd: (LatLng newPosition) async {
         _destinationPosition = newPosition;
-        createTrackingLine(newPosition, Colors.yellowAccent);
+        await createRoutingLine(newPosition, Colors.yellowAccent);
       },
     );
 
     _marker![destinationMarkerId] = destinationMarker;
-    createTrackingLine(position, Colors.black54);
+    createRoutingLine(position, Colors.black54);
     notifyListeners();
   }
 
-  // ➖ Create polyline between current and destination
-  void createTrackingLine(LatLng destination, Color color) {
+  // 🗺️ Create actual route polyline using Google Directions API
+  Future<void> createRoutingLine(LatLng destination, Color color) async {
+    if (_locationPosition == null) return;
+
+    try {
+      // Get route using flutter_polyline_points
+      PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+        request: PolylineRequest(
+          origin: PointLatLng(_locationPosition!.latitude, _locationPosition!.longitude),
+          destination: PointLatLng(destination.latitude, destination.longitude),
+          mode: TravelMode.driving, // You can change this to walking, transit, etc.
+        ),
+      );
+
+      if (result.points.isNotEmpty) {
+        // Convert to LatLng for Google Maps
+        List<LatLng> polylineCoordinates = result.points
+            .map((point) => LatLng(point.latitude, point.longitude))
+            .toList();
+
+        final Polyline polyline = Polyline(
+          polylineId: const PolylineId('route_line'),
+          color: color,
+          width: 5,
+          points: polylineCoordinates,
+          consumeTapEvents: true,
+          onTap: () {
+            final distance = _calculateRouteDistance(polylineCoordinates);
+            final kmOrM = distance > 1000
+                ? "${(distance / 1000).toStringAsFixed(2)} km"
+                : "${distance.toStringAsFixed(0)} m";
+            debugPrint("Route tapped. Approximate distance: $kmOrM");
+          },
+        );
+
+        _polylines.clear();
+        _polylines.add(polyline);
+        notifyListeners();
+      } else {
+        // Fallback to straight line if route not found
+        debugPrint('No route found, using straight line');
+        _createStraightLine(destination, color);
+      }
+    } catch (e) {
+      debugPrint('Error getting route: $e');
+      // Fallback to straight line on error
+      _createStraightLine(destination, color);
+    }
+  }
+
+  // ➖ Fallback method: Create straight line polyline (original method)
+  void _createStraightLine(LatLng destination, Color color) {
     if (_locationPosition == null) return;
 
     final Polyline polyline = Polyline(
@@ -340,7 +399,7 @@ class LocationProvider with ChangeNotifier {
           final kmOrM = distance > 1000
               ? "${(distance / 1000).toStringAsFixed(2)} km"
               : "${distance.toStringAsFixed(0)} m";
-          debugPrint("Tracking line tapped. Distance: $kmOrM");
+          debugPrint("Straight line tapped. Distance: $kmOrM");
         }
       },
     );
@@ -348,6 +407,15 @@ class LocationProvider with ChangeNotifier {
     _polylines.clear();
     _polylines.add(polyline);
     notifyListeners();
+  }
+
+  // 📏 Calculate total route distance from polyline points
+  double _calculateRouteDistance(List<LatLng> points) {
+    double totalDistance = 0.0;
+    for (int i = 0; i < points.length - 1; i++) {
+      totalDistance += calculateDistance(points[i], points[i + 1]);
+    }
+    return totalDistance;
   }
 
   // 🧹 Clear polyline and destination marker
@@ -375,9 +443,90 @@ class LocationProvider with ChangeNotifier {
     return earthRadius * c;
   }
 
-  // 📏 Expose current-to-destination distance
+  // 📏 Expose current-to-destination distance (straight line)
   double? get currentToDestinationDistance {
     if (_locationPosition == null || _destinationPosition == null) return null;
     return calculateDistance(_locationPosition!, _destinationPosition!);
   }
-}
+
+  // 🗺️ Check if route exists
+  bool get hasActiveRoute => _polylines.isNotEmpty;
+
+  // 🗺️ Get current route information
+  Map<String, dynamic>? get currentRouteInfo {
+    if (!hasActiveRoute) return null;
+    
+    final polyline = _polylines.first;
+    final routePoints = polyline.points;
+    
+    if (routePoints.length < 2) return null;
+    
+    final routeDistance = _calculateRouteDistance(routePoints);
+    final estimatedTime = _estimateRouteTime(routeDistance);
+    
+    return {
+      'distance': routeDistance,
+      'distanceText': routeDistance > 1000
+          ? "${(routeDistance / 1000).toStringAsFixed(2)} km"
+          : "${routeDistance.toStringAsFixed(0)} m",
+      'estimatedTimeMinutes': estimatedTime,
+      'estimatedTimeText': _formatTime(estimatedTime),
+      'pointsCount': routePoints.length,
+      'origin': _locationPosition,
+      'destination': _destinationPosition,
+      'routePoints': routePoints,
+      'polylineColor': polyline.color,
+    };
+  }
+
+  // 🕐 Estimate route time based on distance (rough estimation)
+  double _estimateRouteTime(double distanceInMeters) {
+    // Assume average speed of 30 km/h in city traffic
+    const double averageSpeedKmh = 30.0;
+    const double averageSpeedMs = averageSpeedKmh * 1000 / 3600; // Convert to m/s
+    
+    final double timeInSeconds = distanceInMeters / averageSpeedMs;
+    return timeInSeconds / 60; // Return in minutes
+  }
+
+  // 📝 Format time in readable format
+  String _formatTime(double minutes) {
+    if (minutes < 60) {
+      return "${minutes.toStringAsFixed(0)} min";
+    } else {
+      final hours = (minutes / 60).floor();
+      final remainingMinutes = (minutes % 60).toStringAsFixed(0);
+      return "${hours}h ${remainingMinutes}min";
+    }
+  }
+
+  // 🗺️ Get route summary text
+  String get routeSummary {
+    final routeInfo = currentRouteInfo;
+    if (routeInfo == null) return "No active route";
+    
+    return "${routeInfo['distanceText']} • ${routeInfo['estimatedTimeText']}";
+  }
+
+  // 🗺️ Show route details (for debugging or info display)
+  void showRouteDetails() {
+    final routeInfo = currentRouteInfo;
+    if (routeInfo == null) {
+      debugPrint("No active route to show");
+      return;
+    }
+    
+    debugPrint("=== CURRENT ROUTE DETAILS ===");
+    debugPrint("Distance: ${routeInfo['distanceText']}");
+    debugPrint("Estimated Time: ${routeInfo['estimatedTimeText']}");
+    debugPrint("Route Points: ${routeInfo['pointsCount']}");
+    debugPrint("Origin: ${routeInfo['origin']}");
+    debugPrint("Destination: ${routeInfo['destination']}");
+    debugPrint("============================");
+  }
+
+  // 🗺️ Get route coordinates for external use
+  List<LatLng>? get currentRouteCoordinates {
+    if (!hasActiveRoute) return null;
+    return _polylines.first.points;
+  } }

@@ -9,6 +9,7 @@ import 'package:zenifytrip_guide/features/task/tasklist.dart';
 import 'package:zenifytrip_guide/features/task/taskpage.dart';
 import 'package:zenifytrip_guide/map.dart';
 import 'package:zenifytrip_guide/pages/about.dart';
+import 'package:zenifytrip_guide/screens/explore.dart';
 import 'package:zenifytrip_guide/theme.dart';
 import '../features/auth/presentation/providers/auth_provider.dart';
 import 'discovery_page.dart';
@@ -34,7 +35,7 @@ class _HomePageState extends ConsumerState<HomePage>
   final List<Widget> _pages = [
     const DiscoveryPage(),
     TaskListPage(),
-    GoogleMapPage(),
+    ExplorePage(),
     const MessagePage(),
     ProfilePage(),
   ];

@@ -63,8 +63,8 @@ dev_dependencies:
   build_runner:
 dependency_overrides:
   zenify_auth:
-    # path: C:/Users/oussa/zenify_auth
-    path: ../auth-lib
+    path: C:/Users/oussa/zenify_auth
+    # path: ../auth-lib
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

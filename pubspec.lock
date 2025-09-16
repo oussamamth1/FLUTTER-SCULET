@@ -1048,8 +1048,8 @@ packages:
   zenify_auth:
     dependency: "direct overridden"
     description:
-      path: "../auth-lib"
-      relative: true
+      path: "C:/Users/oussa/zenify_auth"
+      relative: false
     source: path
     version: "0.0.1"
 sdks:

@@ -13,11 +13,10 @@ import 'package:zenifytrip_guide/project/routes/app_rout_const.dart';
 import 'package:zenify_auth/zenify_auth.dart';
 
 class AppRoutConfig {
-
   /// Returns a GoRouter configured with auth state from Riverpod
   static GoRouter returnRouter(WidgetRef ref) {
     // Watch the auth state notifier
-    
+
     final authNotifier = ref.watch(authProvider.notifier);
 
     return GoRouter(
@@ -45,15 +44,42 @@ class AppRoutConfig {
             ),
             GoRoute(
               name: AppRouteConst.login,
-              path: 'login',
+              path: '/login',
               builder:
                   (BuildContext context, GoRouterState state) => LoginScreen(
                     snackBarColor: Colors.green, // ✅ Custom SnackBar color
                     showForgotPassword: true, // ✅ Show Forgot Password
+                    canRegister: true,
+           onRegister: () => context.go('/register'),
                     onForgotPassword: () {
                       // ✅ Your forgot password logic
                       print("Forgot Password Clicked");
+                      // You can navigate to forgot password screen:
+                      // context.go('/forgot-password');
                     },
+                  ),
+            ),
+            GoRoute(
+              name: AppRouteConst.register,
+              path: '/register',
+              builder:
+                  (BuildContext context, GoRouterState state) => RegisterScreen(
+                    snackBarColor: Colors.green,
+                    canLogin: true,
+                    requireTermsAcceptance:
+                        true, // Optional: require terms acceptance
+                    onLogin: () {
+                      // Navigate back to login page
+                      context.go('/login');
+                    },
+                    onTermsPressed: () {
+                      // Navigate to terms and conditions page
+                      print("Terms and Conditions Clicked");
+                      // context.go('/terms');
+                    },
+                    // Optional: Add background image
+                    // backgroundImage: 'assets/images/auth_bg.jpg',
+                    // overlayColor: Colors.black.withOpacity(0.3),
                   ),
             ),
             GoRoute(
@@ -84,11 +110,14 @@ class AppRoutConfig {
         final authState = ref.read(authProvider);
         final isLoggedIn = authState.status == AuthStatus.authenticated;
         final isLoading = authState.status == AuthStatus.loading;
-        final loggingIn = state.matchedLocation == '/login';
+        final currentPath = state.matchedLocation;
 
-        if (isLoading) return null; // Don't redirect yet while checking login
-        if (!isLoggedIn && !loggingIn) return '/login';
-        if (isLoggedIn && loggingIn) return '/';
+        final isAuthPage =
+            currentPath == '/login' || currentPath == '/register';
+
+        if (isLoading) return null;
+        if (!isLoggedIn && !isAuthPage) return '/login';
+        if (isLoggedIn && isAuthPage) return '/';
         return null;
       },
       // Refresh GoRouter when auth state changes

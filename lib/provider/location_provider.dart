@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math' show sin, cos, sqrt, atan2, pi;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'dart:async'; // Add this import
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -47,25 +48,274 @@ class LocationProvider with ChangeNotifier {
 
   late PolylinePoints polylinePoints;
 
+  // 🆕 NEW: Real-time tracking variables
+  StreamSubscription<ge.Position>? _positionStreamSubscription;
+  bool _isTrackingEnabled = false;
+  bool get isTrackingEnabled => _isTrackingEnabled;
+
+  // Track movement history
+  List<LatLng> _movementHistory = [];
+  List<LatLng> get movementHistory => _movementHistory;
+
+  // Minimum distance to update route (in meters)
+  static const double _minDistanceForUpdate = 10.0;
+  LatLng? _lastKnownPosition;
+
   // 🔐 SECURE: Store API keys in environment variables or secure storage
-  // For development, you can hardcode temporarily but NEVER commit to Git
   static const String _googleMapsApiKey = String.fromEnvironment(
     'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=',
     defaultValue: 'AIzaSyBiE7onmrq11reD-hX0aNi4ouxNKzue_WQ',
   );
   static const String _openRouteApiKey = String.fromEnvironment(
     'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=',
-    defaultValue: 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=',
+    defaultValue:
+        'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=',
   );
 
   // Constructor
   LocationProvider() {
     _location = Location();
     _marker = <MarkerId, Marker>{};
-    // Only initialize if we have a valid API key
-    if (_googleMapsApiKey != 'your-google-api-key-here') {
+    if (_googleMapsApiKey != 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=') {
       polylinePoints = PolylinePoints(apiKey: _googleMapsApiKey);
     }
+  }
+
+  // 🆕 NEW: Start real-time location tracking
+  Future<void> startLocationTracking() async {
+    if (_isTrackingEnabled) return;
+
+    try {
+      // Check permissions first
+      bool serviceEnabled = await ge.Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        debugPrint('❌ Location services are disabled.');
+        return;
+      }
+
+      ge.LocationPermission permission = await ge.Geolocator.checkPermission();
+      if (permission == ge.LocationPermission.denied) {
+        permission = await ge.Geolocator.requestPermission();
+        if (permission == ge.LocationPermission.denied) {
+          debugPrint('❌ Location permission denied.');
+          return;
+        }
+      }
+
+      if (permission == ge.LocationPermission.deniedForever) {
+        debugPrint('❌ Location permissions are permanently denied.');
+        return;
+      }
+
+      // Start listening to position changes
+      const ge.LocationSettings locationSettings = ge.LocationSettings(
+        accuracy: ge.LocationAccuracy.high,
+        distanceFilter: 5, // Update every 5 meters
+      );
+
+      _positionStreamSubscription = ge.Geolocator.getPositionStream(
+        locationSettings: locationSettings,
+      ).listen((ge.Position position) {
+        _onLocationUpdate(position);
+      });
+
+      _isTrackingEnabled = true;
+      debugPrint('✅ Real-time location tracking started');
+    } catch (e) {
+      debugPrint('❌ Error starting location tracking: $e');
+    }
+  }
+
+  // 🆕 NEW: Handle location updates
+  void _onLocationUpdate(ge.Position position) {
+    LatLng newPosition = LatLng(position.latitude, position.longitude);
+
+    // Check if position has changed significantly
+    if (_lastKnownPosition != null) {
+      double distanceMoved = calculateDistance(
+        _lastKnownPosition!,
+        newPosition,
+      );
+      if (distanceMoved < _minDistanceForUpdate) {
+        return; // Don't update if movement is too small
+      }
+    }
+
+    // Update current location
+    _locationPosition = newPosition;
+    _lastKnownPosition = newPosition;
+
+    // Add to movement history
+    _movementHistory.add(newPosition);
+
+    // Keep only last 50 positions to prevent memory issues
+    if (_movementHistory.length > 50) {
+      _movementHistory.removeAt(0);
+    }
+
+    // Update current location marker
+    _updateCurrentLocationMarker(newPosition);
+
+    // If we have a destination, update the route
+    if (_destinationPosition != null) {
+      _updateRouteFromCurrentPosition();
+    }
+
+    debugPrint('📍 Location updated: $newPosition');
+    notifyListeners();
+  }
+
+  // 🆕 NEW: Update current location marker
+  void _updateCurrentLocationMarker(LatLng position) {
+    if (_marker == null) return;
+
+    final Marker currentLocationMarker = Marker(
+      markerId: markerId,
+      position: position,
+      icon:
+          _pinLocationIcon ??
+          BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+      infoWindow: const InfoWindow(
+        title: 'Current Location',
+        snippet: 'Your current position',
+      ),
+    );
+
+    _marker![markerId] = currentLocationMarker;
+  }
+
+  // 🆕 NEW: Update route from current position
+  Future<void> _updateRouteFromCurrentPosition() async {
+    if (_destinationPosition == null || _locationPosition == null) return;
+
+    debugPrint('🔄 Updating route from current position...');
+
+    // Use the working route method for reliable updates
+    await createWorkingRoute(_destinationPosition!, Colors.blue);
+  }
+
+  // 🆕 NEW: Stop real-time location tracking
+  void stopLocationTracking() {
+    _positionStreamSubscription?.cancel();
+    _positionStreamSubscription = null;
+    _isTrackingEnabled = false;
+    debugPrint('🛑 Location tracking stopped');
+    notifyListeners();
+  }
+
+  // 🆕 NEW: Clear movement history
+  void clearMovementHistory() {
+    _movementHistory.clear();
+    notifyListeners();
+  }
+
+  // 🆕 NEW: Get total distance traveled
+  double getTotalDistanceTraveled() {
+    if (_movementHistory.length < 2) return 0.0;
+
+    double totalDistance = 0.0;
+    for (int i = 1; i < _movementHistory.length; i++) {
+      totalDistance += calculateDistance(
+        _movementHistory[i - 1],
+        _movementHistory[i],
+      );
+    }
+    return totalDistance;
+  }
+
+  // Enhanced initialization with tracking option
+  Future<void> initialization({bool startTracking = false}) async {
+    await getUserLocation();
+    await setCustomMapPin();
+
+    if (startTracking) {
+      await startLocationTracking();
+    }
+  }
+
+  // Modified addDestinationMarker to work with real-time tracking
+  void addDestinationMarker(LatLng position) {
+    _destinationPosition = position;
+
+    final Marker destinationMarker = Marker(
+      markerId: destinationMarkerId,
+      position: position,
+      icon:
+          _destinationIcon ??
+          BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+      draggable: true,
+      infoWindow: const InfoWindow(title: 'Destination'),
+      onDragEnd: (LatLng newPosition) async {
+        _destinationPosition = newPosition;
+        await createWorkingRoute(newPosition, Colors.blue);
+      },
+    );
+
+    _marker![destinationMarkerId] = destinationMarker;
+
+    // Create initial route and start tracking if not already started
+    createWorkingRoute(position, Colors.blue);
+
+    if (!_isTrackingEnabled) {
+      startLocationTracking();
+    }
+
+    notifyListeners();
+  }
+
+  // Enhanced clear tracking to stop location updates
+  void clearTracking() {
+    _polylines.clear();
+    _destinationPosition = null;
+    _marker?.remove(destinationMarkerId);
+    stopLocationTracking();
+    clearMovementHistory();
+    notifyListeners();
+  }
+
+  // 🆕 NEW: Get remaining distance to destination
+  double? getRemainingDistance() {
+    if (_locationPosition == null || _destinationPosition == null) return null;
+    return calculateDistance(_locationPosition!, _destinationPosition!);
+  }
+
+  // 🆕 NEW: Get estimated time remaining
+  double? getEstimatedTimeRemaining() {
+    double? distance = getRemainingDistance();
+    if (distance == null) return null;
+    return _estimateRouteTime(distance);
+  }
+
+  // Enhanced route summary with real-time info
+  String get routeSummary {
+    if (!hasActiveRoute) return "No active route";
+
+    double? remaining = getRemainingDistance();
+    double? timeRemaining = getEstimatedTimeRemaining();
+
+    if (remaining == null) return "Route active";
+
+    String distanceText =
+        remaining > 1000
+            ? "${(remaining / 1000).toStringAsFixed(1)} km"
+            : "${remaining.round()} m";
+
+    if (timeRemaining != null) {
+      String timeText =
+          timeRemaining < 60
+              ? "${timeRemaining.round()} min"
+              : "${(timeRemaining / 60).floor()}h ${(timeRemaining % 60).round()}m";
+      return "$distanceText • $timeText";
+    }
+
+    return distanceText;
+  }
+
+  // Dispose method to clean up resources
+  @override
+  void dispose() {
+    stopLocationTracking();
+    super.dispose();
   }
 
   // Update search and apply filter
@@ -78,7 +328,8 @@ class LocationProvider with ChangeNotifier {
   Future<void> _applyFilter(BuildContext context) async {
     if (_marker == null) return;
 
-    _marker!.clear();
+    // Clear API markers but keep current location and destination
+    _marker!.removeWhere((key, value) => key.value.startsWith('api_marker_'));
     _apiPositions.clear();
 
     final filtered =
@@ -143,13 +394,8 @@ class LocationProvider with ChangeNotifier {
                     ElevatedButton(
                       onPressed: () async {
                         Navigator.pop(context);
-                        // 🔧 FIX: Use the improved fallback method
-                        await createRoutingLineWithFallbacks(
-                          position,
-                          Colors.green,
-                        );
-                        _destinationPosition = position;
-                        _marker!.remove(destinationMarkerId);
+                        // Set this as destination and start tracking
+                        addDestinationMarker(position);
                       },
                       child: const Text("Track Position"),
                     ),
@@ -213,12 +459,6 @@ class LocationProvider with ChangeNotifier {
     }
   }
 
-  // Initialize location services
-  Future<void> initialization() async {
-    await getUserLocation();
-    await setCustomMapPin();
-  }
-
   // Get current user location
   Future<void> getUserLocation() async {
     try {
@@ -247,6 +487,14 @@ class LocationProvider with ChangeNotifier {
       );
 
       _locationPosition = LatLng(position.latitude, position.longitude);
+      _lastKnownPosition = _locationPosition;
+
+      // Add initial position to history
+      if (_locationPosition != null) {
+        _movementHistory.add(_locationPosition!);
+        _updateCurrentLocationMarker(_locationPosition!);
+      }
+
       debugPrint('Location obtained: $_locationPosition');
     } catch (e) {
       debugPrint('Error getting location: $e');
@@ -293,7 +541,7 @@ class LocationProvider with ChangeNotifier {
     debugPrint('🚀 Creating route from $_locationPosition to $destination');
 
     // Method 1: Try Google Directions API
-    if (_googleMapsApiKey != 'your-google-api-key-here') {
+    if (_googleMapsApiKey != 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=') {
       bool googleSuccess = await _tryGoogleDirections(destination, color);
       if (googleSuccess) {
         debugPrint('✅ Google Directions API worked');
@@ -302,7 +550,7 @@ class LocationProvider with ChangeNotifier {
     }
 
     // Method 2: Try OpenRoute Service
-    if (_openRouteApiKey != 'your-openroute-api-key-here') {
+    if (_openRouteApiKey != 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=') {
       debugPrint('⚠️ Google failed, trying OpenRoute Service...');
       bool openRouteSuccess = await _tryOpenRouteService(destination, color);
       if (openRouteSuccess) {
@@ -469,37 +717,6 @@ class LocationProvider with ChangeNotifier {
     return earthRadius * c;
   }
 
-  // Clear all tracking
-  void clearTracking() {
-    _polylines.clear();
-    _destinationPosition = null;
-    _marker?.remove(destinationMarkerId);
-    notifyListeners();
-  }
-
-  // Add destination marker
-  void addDestinationMarker(LatLng position) {
-    _destinationPosition = position;
-
-    final Marker destinationMarker = Marker(
-      markerId: destinationMarkerId,
-      position: position,
-      icon:
-          _destinationIcon ??
-          BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-      draggable: true,
-      infoWindow: const InfoWindow(title: 'Destination'),
-      onDragEnd: (LatLng newPosition) async {
-        _destinationPosition = newPosition;
-        await createRoutingLineWithFallbacks(newPosition, Colors.blue);
-      },
-    );
-
-    _marker![destinationMarkerId] = destinationMarker;
-    createRoutingLineWithFallbacks(position, Colors.blue);
-    notifyListeners();
-  }
-
   // Getters for route information
   bool get hasActiveRoute => _polylines.isNotEmpty;
 
@@ -508,16 +725,7 @@ class LocationProvider with ChangeNotifier {
     return calculateDistance(_locationPosition!, _destinationPosition!);
   }
 
-  String get routeSummary {
-    if (!hasActiveRoute) return "No active route";
-    final distance = _calculateRouteDistance(_polylines.first.points);
-    final distanceText =
-        distance > 1000
-            ? "${(distance / 1000).toStringAsFixed(2)} km"
-            : "${distance.toStringAsFixed(0)} m";
-    return distanceText;
-  }
-// 🚀 IMMEDIATE WORKING SOLUTION - No API keys needed
+  // 🚀 IMMEDIATE WORKING SOLUTION - No API keys needed
   Future<void> createWorkingRoute(LatLng destination, Color color) async {
     if (_locationPosition == null) {
       debugPrint('❌ Error: Current location is null');
@@ -553,8 +761,6 @@ class LocationProvider with ChangeNotifier {
                 : "${(estimatedTime / 60).floor()}h ${(estimatedTime % 60).round()}m";
 
         debugPrint("Route: $kmOrM • $timeText");
-
-        // Optional: Show info to user
         _showRouteInfo(distance, estimatedTime);
       },
     );

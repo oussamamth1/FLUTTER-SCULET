@@ -1,7 +1,13 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenify_auth/zenify_auth.dart' as zenifyAuth;
 import 'package:go_router/go_router.dart';
+import 'package:zenifytrip_guide/env.dart';
+import 'package:zenifytrip_guide/provider/location_provider.dart';
+import 'package:provider/provider.dart' as provider;
+
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -18,6 +24,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   void initState() {
     super.initState();
     _initSocket();
+    Future.microtask(() {
+      final authState = ref.read(zenifyAuth.authProvider);
+      final pictureUrl = authState.user?.picture;
+
+    
+    });
   }
 
   Future<void> _initSocket() async {
@@ -43,6 +55,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   Widget build(BuildContext context) {
     final user = ref.watch(zenifyAuth.authProvider);
     final authState = ref.watch(zenifyAuth.authProvider);
+    print(authState.user?.picture);
+    final locationProvider = context.read<LocationProvider>();
+    locationProvider.setCustomMapPin(
+        "${AppEnvironment.baseApiUrl}/assets/uploads/traveller/${authState.user?.picture}");
+    locationProvider.setPictureUrl("${AppEnvironment.baseApiUrl}/assets/uploads/traveller/${authState.user?.picture}");
     //print("Auth Cookie: $authCookie");
     return Scaffold(
       appBar: AppBar(title: Text('Profile s${authCookie ?? "dd"}')),

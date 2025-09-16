@@ -12,11 +12,16 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:zenifytrip_guide/pages/profile_page.dart';
 import 'package:zenifytrip_guide/project/routes/app_rout_const.dart';
+import 'dart:typed_data';
+import 'package:image/image.dart' as img;
 
 class LocationProvider with ChangeNotifier {
+  String? _pictureUrl;
+  String? get pictureUrl => _pictureUrl;
   BitmapDescriptor? _pinLocationIcon;
   BitmapDescriptor? get pinLocationIcon => _pinLocationIcon;
-
+  BitmapDescriptor? _updatePinLocationIcon;
+  BitmapDescriptor? get updatePinLocationIcon => _updatePinLocationIcon;
   BitmapDescriptor? _destinationIcon;
   BitmapDescriptor? get destinationIcon => _destinationIcon;
 
@@ -76,7 +81,8 @@ class LocationProvider with ChangeNotifier {
   LocationProvider() {
     _location = Location();
     _marker = <MarkerId, Marker>{};
-    if (_googleMapsApiKey != 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=') {
+    if (_googleMapsApiKey !=
+        'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=') {
       polylinePoints = PolylinePoints(apiKey: _googleMapsApiKey);
     }
   }
@@ -165,10 +171,60 @@ class LocationProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // 🆕 NEW: Update current location marker
-  void _updateCurrentLocationMarker(LatLng position) {
-    if (_marker == null) return;
+  Future<Uint8List> _circleCrop(Uint8List imageBytes, {int size = 200}) async {
+    final img.Image? original = img.decodeImage(imageBytes);
+    if (original == null) throw Exception("Failed to decode image");
 
+    final img.Image resized = img.copyResizeCropSquare(original, size: size);
+
+    final circleImage = img.Image(width: size, height: size);
+    circleImage.clear(img.ColorUint8(0));
+
+    final centerX = size ~/ 2;
+    final centerY = size ~/ 2;
+    final radius = size ~/ 2;
+
+    for (int y = 0; y < size; y++) {
+      for (int x = 0; x < size; x++) {
+        final dx = x - centerX;
+        final dy = y - centerY;
+        if (dx * dx + dy * dy <= radius * radius) {
+          circleImage.setPixel(x, y, resized.getPixel(x, y));
+        } else {
+          circleImage.setPixel(x, y, img.ColorUint8(0));
+        }
+      }
+    }
+
+    return Uint8List.fromList(img.encodePng(circleImage));
+  }
+
+  // 🆕 NEW: Update current location marker
+  void _updateCurrentLocationMarker(LatLng position) async {
+    if (_marker == null) return;
+    final pictureUrl = _pictureUrl;
+    //"https://api.staging.zenifytrip.com/assets/uploads/traveller/jpeg_20250912_155522_4716816059881589195-zt-20250912155524.jpg";
+
+    if (pictureUrl != null ) {
+      // Circular crop
+      final Uint8List imageBytes = await _loadNetworkImage(pictureUrl);
+      final Uint8List circularBytes = await _circleCrop(imageBytes, size: 200);
+
+      _pinLocationIcon = BitmapDescriptor.bytes(
+        circularBytes,
+        imagePixelRatio: 2.5,
+        width: 25, // adjust size
+        height: 25,
+      );
+      // Load image from network
+      // final Uint8List imageBytes = await _loadNetworkImage(pictureUrl);
+      // _pinLocationIcon = BitmapDescriptor.bytes(
+      //   imageBytes,
+      //   imagePixelRatio: 2.5,
+      //   width: 20,
+      //   height: 20,
+      // );
+    }
     final Marker currentLocationMarker = Marker(
       markerId: markerId,
       position: position,
@@ -226,7 +282,7 @@ class LocationProvider with ChangeNotifier {
   // Enhanced initialization with tracking option
   Future<void> initialization({bool startTracking = false}) async {
     await getUserLocation();
-    await setCustomMapPin();
+    //    await setCustomMapPin();
 
     if (startTracking) {
       await startLocationTracking();
@@ -501,31 +557,89 @@ class LocationProvider with ChangeNotifier {
     }
   }
 
+  Future<Uint8List> _loadNetworkImage(String url) async {
+    final http.Response response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      return response.bodyBytes;
+    } else {
+      throw Exception('Failed to load network image $url');
+    }
+  }
+  void setPictureUrl(String? url) {
+    _pictureUrl = url;
+    notifyListeners();
+  }
   // Set custom map pins
-  Future<void> setCustomMapPin() async {
+  Future<void> setCustomMapPin(String pictureUrl) async {
     try {
-      _pinLocationIcon = await BitmapDescriptor.fromAssetImage(
-        const ImageConfiguration(devicePixelRatio: 2.5),
-        'assets/location.png',
-      );
+      // _pinLocationIcon = await BitmapDescriptor.asset(
+      //   const ImageConfiguration(devicePixelRatio: 2.5),
+      //   'assets/location.png',
+      // );
+    
+
+      if (pictureUrl != null && pictureUrl.isNotEmpty) {
+        final Uint8List imageBytes = await _loadNetworkImage(pictureUrl);
+        final Uint8List circularBytes = await _circleCrop(
+          imageBytes,
+          size: 200,
+        );
+
+        _pinLocationIcon = BitmapDescriptor.bytes(
+          circularBytes,
+          imagePixelRatio: 2.5,
+          width: 25, // adjust size
+          height: 25,
+        );
+        // Load image from network
+        // final Uint8List imageBytes = await _loadNetworkImage(pictureUrl);
+        // _pinLocationIcon = BitmapDescriptor.bytes(
+        //   imageBytes,
+        //   imagePixelRatio: 2.5,
+        //   width: 20,
+        //   height: 20,
+        // );
+      } else {
+        // fallback to default asset
+        _pinLocationIcon = await BitmapDescriptor.asset(
+          const ImageConfiguration(devicePixelRatio: 2.5),
+          'assets/location.png',
+        );
+      }
     } catch (e) {
       debugPrint('Using default location marker: $e');
-      _pinLocationIcon = BitmapDescriptor.defaultMarkerWithHue(
-        BitmapDescriptor.hueBlue,
+      final Uint8List imageBytes = await _loadNetworkImage(pictureUrl);
+      final Uint8List circularBytes = await _circleCrop(imageBytes, size: 200);
+
+      _pinLocationIcon = BitmapDescriptor.bytes(
+        circularBytes,
+        imagePixelRatio: 2.5,
+        width: 25, // adjust size
+        height: 25,
       );
+      // final Uint8List imageBytes = await _loadNetworkImage(
+      //   pictureUrl,
+      // );
+
+      // _pinLocationIcon = BitmapDescriptor.bytes(
+      //   imageBytes,
+      //   imagePixelRatio: 2.5,
+      //   width: 20,
+      //   height: 20,
+      // );
     }
 
-    try {
-      _destinationIcon = await BitmapDescriptor.fromAssetImage(
-        const ImageConfiguration(devicePixelRatio: 2.5),
-        'assets/pin1.png',
-      );
-    } catch (e) {
-      debugPrint('Using default destination marker: $e');
-      _destinationIcon = BitmapDescriptor.defaultMarkerWithHue(
-        BitmapDescriptor.hueRed,
-      );
-    }
+    // try {
+    //   _destinationIcon = await BitmapDescriptor.fromAssetImage(
+    //     const ImageConfiguration(devicePixelRatio: 2.5),
+    //     'assets/pin1.png',
+    //   );
+    // } catch (e) {
+    //   debugPrint('Using default destination marker: $e');
+    //   _destinationIcon = BitmapDescriptor.defaultMarkerWithHue(
+    //     BitmapDescriptor.hueRed,
+    //   );
+    // }
   }
 
   // 🚀 IMPROVED: Smart routing with multiple fallbacks
@@ -541,7 +655,8 @@ class LocationProvider with ChangeNotifier {
     debugPrint('🚀 Creating route from $_locationPosition to $destination');
 
     // Method 1: Try Google Directions API
-    if (_googleMapsApiKey != 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=') {
+    if (_googleMapsApiKey !=
+        'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=') {
       bool googleSuccess = await _tryGoogleDirections(destination, color);
       if (googleSuccess) {
         debugPrint('✅ Google Directions API worked');
@@ -550,7 +665,8 @@ class LocationProvider with ChangeNotifier {
     }
 
     // Method 2: Try OpenRoute Service
-    if (_openRouteApiKey != 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=') {
+    if (_openRouteApiKey !=
+        'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=') {
       debugPrint('⚠️ Google failed, trying OpenRoute Service...');
       bool openRouteSuccess = await _tryOpenRouteService(destination, color);
       if (openRouteSuccess) {

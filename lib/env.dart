@@ -20,7 +20,7 @@ abstract class AppEnvironment {
   static late CardTheme cardthemeDark;
   static late CardTheme cardthemelite;
   static late FloatingActionButtonThemeData floatingActionButtonTheme;
-static ThemeData get lightTheme => ThemeHelper.getLightTheme(environment);
+  static ThemeData get lightTheme => ThemeHelper.getLightTheme(environment);
   static Environment get environment => _environment;
 
   static setupEnv(Environment env) {
@@ -31,9 +31,11 @@ static ThemeData get lightTheme => ThemeHelper.getLightTheme(environment);
       print('=== Environment Setup Debug ===');
       print('Environment: $env');
       print(
-          'API_URL from dart-define: "${const String.fromEnvironment('API_URL', defaultValue: 'NOT_SET')}"');
+        'API_URL from dart-define: "${const String.fromEnvironment('API_URL', defaultValue: 'NOT_SET')}"',
+      );
       print(
-          'APIUrlTUNISIA from dart-define: "${const String.fromEnvironment('APIUrlTUNISIA', defaultValue: 'NOT_SET')}"');
+        'APIUrlTUNISIA from dart-define: "${const String.fromEnvironment('APIUrlTUNISIA', defaultValue: 'NOT_SET')}"',
+      );
     }
 
     switch (env) {
@@ -48,45 +50,56 @@ static ThemeData get lightTheme => ThemeHelper.getLightTheme(environment);
         {
           showconversation = false;
           baseApiUrl = 'https://api.zenifytrip.com';
-       //   baseApiUrl = 'https://api.staging.zenifytrip.com';
+          //   baseApiUrl = 'https://api.staging.zenifytrip.com';
 
           //https://api.tunisiepromo.com/
           title = 'ZenifyTip';
           imagePath = "assets/icon/zenify.png"; // Sunshine URL';
           primarySwatch = const Color.fromARGB(255, 190, 137, 22);
           primarySwatchlite = Color.fromARGB(255, 235, 95, 82);
-primary =const Color.fromARGB(255, 1, 129, 67);
+          primary = const Color.fromARGB(255, 1, 129, 67);
           floatingActionButtonTheme = FloatingActionButtonThemeData(
-            backgroundColor: const Color.fromARGB(255, 1, 129, 67), // Background color of the FAB
+            backgroundColor: const Color.fromARGB(
+              255,
+              1,
+              129,
+              67,
+            ), // Background color of the FAB
             foregroundColor: Colors.white, // Icon color
             elevation: 4.0, // Shadow elevation
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12), // Custom shape
             ),
           );
-          cardthemeDark = CardTheme(
-            color: Color.fromARGB(255, 233, 181, 11),
-          );
+          cardthemeDark = CardTheme(color: Color.fromARGB(255, 233, 181, 11));
           cardthemelite = CardTheme(color: Color.fromRGBO(243, 235, 240, 1));
           elevatedButtonTheme = ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
-                elevation: 8.0,
-                shadowColor: const Color.fromARGB(255, 2, 197, 80),
-                backgroundColor: const Color.fromARGB(255, 203, 163, 110),
-                disabledBackgroundColor: const Color.fromARGB(255, 119, 183, 0).withOpacity(0.4),
-                disabledForegroundColor: Colors.deepOrange),
+              elevation: 8.0,
+              shadowColor: const Color.fromARGB(255, 2, 197, 80),
+              backgroundColor: const Color.fromARGB(255, 203, 163, 110),
+              disabledBackgroundColor: const Color.fromARGB(
+                255,
+                119,
+                183,
+                0,
+              ).withOpacity(0.4),
+              disabledForegroundColor: Colors.deepOrange,
+            ),
           );
           break;
 
-         // _setupCommonSunshineConfig();
-         // break;
+          // _setupCommonSunshineConfig();
+          // break;
         }
       case Environment.dev:
         {
           // baseApiUrl = '';
           showconversation = false;
-          const apiUrlFromDefine =
-              String.fromEnvironment('API_URL', defaultValue: '');
+          const apiUrlFromDefine = String.fromEnvironment(
+            'API_URL',
+            defaultValue: '',
+          );
 
           if (kDebugMode) {
             print('Raw API_URL value: "$apiUrlFromDefine"');
@@ -99,7 +112,8 @@ primary =const Color.fromARGB(255, 1, 129, 67);
             baseApiUrl = 'https://api.staging.zenifytrip.com';
             if (kDebugMode) {
               print(
-                  'WARNING: API_URL not provided via --dart-define, using default: $baseApiUrl');
+                'WARNING: API_URL not provided via --dart-define, using default: $baseApiUrl',
+              );
             }
           } else {
             baseApiUrl = apiUrlFromDefine;
@@ -127,8 +141,10 @@ primary =const Color.fromARGB(255, 1, 129, 67);
           showconversation = false;
 
           // Get API URL from dart-define with fallback
-          const apiUrlFromDefine =
-              String.fromEnvironment('API_URL', defaultValue: '');
+          const apiUrlFromDefine = String.fromEnvironment(
+            'API_URL',
+            defaultValue: '',
+          );
 
           if (kDebugMode) {
             print('Raw API_URL value: "$apiUrlFromDefine"');
@@ -142,7 +158,8 @@ primary =const Color.fromARGB(255, 1, 129, 67);
             baseApiUrl = 'https://api.sunshinevacances.net';
             if (kDebugMode) {
               print(
-                  'WARNING: API_URL not provided via --dart-define, using default: $baseApiUrl');
+                'WARNING: API_URL not provided via --dart-define, using default: $baseApiUrl',
+              );
             }
           } else {
             baseApiUrl = apiUrlFromDefine;
@@ -171,10 +188,11 @@ primary =const Color.fromARGB(255, 1, 129, 67);
           const apiUrlFromDefine = String.fromEnvironment('API_URL');
 
           if (apiUrlFromDefine.isEmpty) {
-            baseApiUrl = 'https://api.tunisiepromo.com';
+            baseApiUrl = 'https://api.staging.zenifytrip.com';
             if (kDebugMode) {
               print(
-                  'WARNING: APIUrlTUNISIA not provided via --dart-define, using default: $baseApiUrl');
+                'WARNING: APIUrlTUNISIA not provided via --dart-define, using default: $baseApiUrl',
+              );
             }
           } else {
             baseApiUrl = apiUrlFromDefine;
@@ -183,103 +201,154 @@ primary =const Color.fromARGB(255, 1, 129, 67);
             }
           }
 
-          AndroidLink = const String.fromEnvironment('ANDROID_LINK',
-              defaultValue:
-                  'https://play.google.com/store/apps/details?id=com.zenify_app.tunisie');
+          AndroidLink = const String.fromEnvironment(
+            'ANDROID_LINK',
+            defaultValue:
+                'https://play.google.com/store/apps/details?id=com.zenify_app.tunisie',
+          );
 
-          IosLink = const String.fromEnvironment('IOS_LINK',
-              defaultValue:
-                  'https://apps.apple.com/us/app/shg-guide/id6736649921');
+          IosLink = const String.fromEnvironment(
+            'IOS_LINK',
+            defaultValue:
+                'https://apps.apple.com/us/app/shg-guide/id6736649921',
+          );
 
-          title = const String.fromEnvironment('APP_TITLE',
-              defaultValue: 'T U N I S I E P R O M O');
+          title = const String.fromEnvironment(
+            'APP_TITLE',
+            defaultValue: 'T U N I S I E P R O M O',
+          );
 
-          imagePath = const String.fromEnvironment('IMAGE_PATH',
-              defaultValue: 'assets/icon/tunisie/TG.jpeg');
+          imagePath = const String.fromEnvironment(
+            'IMAGE_PATH',
+            defaultValue: 'assets/icon/tunisie/TG.jpeg',
+          );
 
           // Parse boolean from string
-          showconversation = const String.fromEnvironment('SHOW_CONVERSATION',
-                      defaultValue: 'false')
-                  .toLowerCase() ==
+          showconversation =
+              const String.fromEnvironment(
+                'SHOW_CONVERSATION',
+                defaultValue: 'false',
+              ).toLowerCase() ==
               'true';
 
           // Parse colors from hex strings (format: 0xFFRRGGBB or RRGGBB)
           primarySwatchlite = _parseColor(
-              const String.fromEnvironment('PRIMARY_SWATCH_LITE',
-                  defaultValue: '0xFF0E8BFF'),
-              const Color.fromARGB(255, 14, 139, 255));
+            const String.fromEnvironment(
+              'PRIMARY_SWATCH_LITE',
+              defaultValue: '0xFF0E8BFF',
+            ),
+            const Color.fromARGB(255, 14, 139, 255),
+          );
 
           primarySwatch = _parseColor(
-              const String.fromEnvironment('PRIMARY_SWATCH',
-                  defaultValue: '0xFFFF8800'),
-              const Color.fromARGB(255, 255, 136, 0));
+            const String.fromEnvironment(
+              'PRIMARY_SWATCH',
+              defaultValue: '0xFFFF8800',
+            ),
+            const Color.fromARGB(255, 255, 136, 0),
+          );
 
           primary = _parseColor(
-              const String.fromEnvironment('PRIMARY_COLOR',
-                  defaultValue: '0xFF1E03EB'),
-              const Color.fromARGB(255, 30, 3, 235));
+            const String.fromEnvironment(
+              'PRIMARY_COLOR',
+              defaultValue: '0xFF1E03EB',
+            ),
+            const Color.fromARGB(255, 30, 3, 235),
+          );
 
           // FloatingActionButton colors
           Color fabBackgroundColor = _parseColor(
-              const String.fromEnvironment('FAB_BACKGROUND_COLOR',
-                  defaultValue: '0xFF185FFA'),
-              const Color.fromARGB(255, 24, 95, 250));
+            const String.fromEnvironment(
+              'FAB_BACKGROUND_COLOR',
+              defaultValue: '0xFF185FFA',
+            ),
+            const Color.fromARGB(255, 24, 95, 250),
+          );
 
           Color fabForegroundColor = _parseColor(
-              const String.fromEnvironment('FAB_FOREGROUND_COLOR',
-                  defaultValue: '0xFFFFFFFF'),
-              Colors.white);
+            const String.fromEnvironment(
+              'FAB_FOREGROUND_COLOR',
+              defaultValue: '0xFFFFFFFF',
+            ),
+            Colors.white,
+          );
 
           floatingActionButtonTheme = FloatingActionButtonThemeData(
             backgroundColor: fabBackgroundColor,
             foregroundColor: fabForegroundColor,
-            elevation: double.tryParse(const String.fromEnvironment(
+            elevation:
+                double.tryParse(
+                  const String.fromEnvironment(
                     'FAB_ELEVATION',
-                    defaultValue: '4.0')) ??
+                    defaultValue: '4.0',
+                  ),
+                ) ??
                 4.0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(double.tryParse(
-                      const String.fromEnvironment('FAB_BORDER_RADIUS',
-                          defaultValue: '12.0')) ??
-                  12.0),
+              borderRadius: BorderRadius.circular(
+                double.tryParse(
+                      const String.fromEnvironment(
+                        'FAB_BORDER_RADIUS',
+                        defaultValue: '12.0',
+                      ),
+                    ) ??
+                    12.0,
+              ),
             ),
           );
 
           // Card theme colors
           Color cardDarkColor = _parseColor(
-              const String.fromEnvironment('CARD_DARK_COLOR',
-                  defaultValue: '0xFFE9B50B'),
-              const Color.fromARGB(255, 233, 181, 11));
+            const String.fromEnvironment(
+              'CARD_DARK_COLOR',
+              defaultValue: '0xFFE9B50B',
+            ),
+            const Color.fromARGB(255, 233, 181, 11),
+          );
 
           Color cardLiteColor = _parseColor(
-              const String.fromEnvironment('CARD_LITE_COLOR',
-                  defaultValue: '0xFFF3EBF0'),
-              const Color.fromRGBO(243, 235, 240, 1));
+            const String.fromEnvironment(
+              'CARD_LITE_COLOR',
+              defaultValue: '0xFFF3EBF0',
+            ),
+            const Color.fromRGBO(243, 235, 240, 1),
+          );
 
           cardthemeDark = CardTheme(color: cardDarkColor);
           cardthemelite = CardTheme(color: cardLiteColor);
 
           // ElevatedButton colors
           Color buttonBackgroundColor = _parseColor(
-              const String.fromEnvironment('BUTTON_BACKGROUND_COLOR',
-                  defaultValue: '0xFF2568FA'),
-              const Color.fromARGB(255, 37, 104, 250));
+            const String.fromEnvironment(
+              'BUTTON_BACKGROUND_COLOR',
+              defaultValue: '0xFF2568FA',
+            ),
+            const Color.fromARGB(255, 37, 104, 250),
+          );
 
           Color buttonShadowColor = _parseColor(
-              const String.fromEnvironment('BUTTON_SHADOW_COLOR',
-                  defaultValue: '0xFFEB6B03'),
-              const Color.fromARGB(255, 235, 107, 3));
+            const String.fromEnvironment(
+              'BUTTON_SHADOW_COLOR',
+              defaultValue: '0xFFEB6B03',
+            ),
+            const Color.fromARGB(255, 235, 107, 3),
+          );
 
           elevatedButtonTheme = ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
-                elevation: double.tryParse(const String.fromEnvironment(
-                        'BUTTON_ELEVATION',
-                        defaultValue: '8.0')) ??
-                    8.0,
-                shadowColor: buttonShadowColor,
-                backgroundColor: buttonBackgroundColor,
-                disabledBackgroundColor: Colors.deepOrange.withOpacity(0.4),
-                disabledForegroundColor: Colors.deepOrange),
+              elevation:
+                  double.tryParse(
+                    const String.fromEnvironment(
+                      'BUTTON_ELEVATION',
+                      defaultValue: '8.0',
+                    ),
+                  ) ??
+                  8.0,
+              shadowColor: buttonShadowColor,
+              backgroundColor: buttonBackgroundColor,
+              disabledBackgroundColor: Colors.deepOrange.withOpacity(0.4),
+              disabledForegroundColor: Colors.deepOrange,
+            ),
           );
 
           if (kDebugMode) {
@@ -373,7 +442,7 @@ primary =const Color.fromARGB(255, 1, 129, 67);
     }
   }
 
-static void _setupCommonTunisieConfig() {
+  static void _setupCommonTunisieConfig() {
     // API URL
     // const apiUrlFromDefine = String.fromEnvironment('API_URL');
     // if (apiUrlFromDefine.isEmpty) {
@@ -390,102 +459,148 @@ static void _setupCommonTunisieConfig() {
     // }
 
     // Store links
-    AndroidLink = const String.fromEnvironment('ANDROID_LINK',
-        defaultValue:
-            'https://play.google.com/store/apps/details?id=com.zenify_app.tunisie');
+    AndroidLink = const String.fromEnvironment(
+      'ANDROID_LINK',
+      defaultValue:
+          'https://play.google.com/store/apps/details?id=com.zenify_app.tunisie',
+    );
 
-    IosLink = const String.fromEnvironment('IOS_LINK',
-        defaultValue: 'https://apps.apple.com/us/app/shg-guide/id6736649921');
+    IosLink = const String.fromEnvironment(
+      'IOS_LINK',
+      defaultValue: 'https://apps.apple.com/us/app/shg-guide/id6736649921',
+    );
 
     // App title & branding
-    title = const String.fromEnvironment('APP_TITLE',
-        defaultValue: 'T U N I S I E P R O M O');
+    title = const String.fromEnvironment(
+      'APP_TITLE',
+      defaultValue: 'T U N I S I E P R O M O',
+    );
 
-    imagePath = const String.fromEnvironment('IMAGE_PATH',
-        defaultValue: 'assets/icon/tunisie/TG.jpeg');
+    imagePath = const String.fromEnvironment(
+      'IMAGE_PATH',
+      defaultValue: 'assets/icon/tunisie/TG.jpeg',
+    );
 
     // Conversation toggle
     showconversation =
-        const String.fromEnvironment('SHOW_CONVERSATION', defaultValue: 'false')
-                .toLowerCase() ==
-            'true';
+        const String.fromEnvironment(
+          'SHOW_CONVERSATION',
+          defaultValue: 'false',
+        ).toLowerCase() ==
+        'true';
 
     // Colors
     primarySwatchlite = _parseColor(
-        const String.fromEnvironment('PRIMARY_SWATCH_LITE',
-            defaultValue: '0xFF0E8BFF'),
-        const Color.fromARGB(255, 14, 139, 255));
+      const String.fromEnvironment(
+        'PRIMARY_SWATCH_LITE',
+        defaultValue: '0xFF0E8BFF',
+      ),
+      const Color.fromARGB(255, 14, 139, 255),
+    );
 
     primarySwatch = _parseColor(
-        const String.fromEnvironment('PRIMARY_SWATCH',
-            defaultValue: '0xFFFF8800'),
-        const Color.fromARGB(255, 255, 136, 0));
+      const String.fromEnvironment(
+        'PRIMARY_SWATCH',
+        defaultValue: '0xFFFF8800',
+      ),
+      const Color.fromARGB(255, 255, 136, 0),
+    );
 
     primary = _parseColor(
-        const String.fromEnvironment('PRIMARY_COLOR',
-            defaultValue: '0xFF1E03EB'),
-        const Color.fromARGB(255, 30, 3, 235));
+      const String.fromEnvironment('PRIMARY_COLOR', defaultValue: '0xFF1E03EB'),
+      const Color.fromARGB(255, 30, 3, 235),
+    );
 
     // FloatingActionButton colors
     Color fabBackgroundColor = _parseColor(
-        const String.fromEnvironment('FAB_BACKGROUND_COLOR',
-            defaultValue: '0xFF185FFA'),
-        const Color.fromARGB(255, 24, 95, 250));
+      const String.fromEnvironment(
+        'FAB_BACKGROUND_COLOR',
+        defaultValue: '0xFF185FFA',
+      ),
+      const Color.fromARGB(255, 24, 95, 250),
+    );
 
     Color fabForegroundColor = _parseColor(
-        const String.fromEnvironment('FAB_FOREGROUND_COLOR',
-            defaultValue: '0xFFFFFFFF'),
-        Colors.white);
+      const String.fromEnvironment(
+        'FAB_FOREGROUND_COLOR',
+        defaultValue: '0xFFFFFFFF',
+      ),
+      Colors.white,
+    );
 
     floatingActionButtonTheme = FloatingActionButtonThemeData(
       backgroundColor: fabBackgroundColor,
       foregroundColor: fabForegroundColor,
-      elevation: double.tryParse(const String.fromEnvironment('FAB_ELEVATION',
-              defaultValue: '4.0')) ??
+      elevation:
+          double.tryParse(
+            const String.fromEnvironment('FAB_ELEVATION', defaultValue: '4.0'),
+          ) ??
           4.0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(double.tryParse(
-                const String.fromEnvironment('FAB_BORDER_RADIUS',
-                    defaultValue: '12.0')) ??
-            12.0),
+        borderRadius: BorderRadius.circular(
+          double.tryParse(
+                const String.fromEnvironment(
+                  'FAB_BORDER_RADIUS',
+                  defaultValue: '12.0',
+                ),
+              ) ??
+              12.0,
+        ),
       ),
     );
 
     // Card theme colors
     Color cardDarkColor = _parseColor(
-        const String.fromEnvironment('CARD_DARK_COLOR',
-            defaultValue: '0xFFE9B50B'),
-        const Color.fromARGB(255, 233, 181, 11));
+      const String.fromEnvironment(
+        'CARD_DARK_COLOR',
+        defaultValue: '0xFFE9B50B',
+      ),
+      const Color.fromARGB(255, 233, 181, 11),
+    );
 
     Color cardLiteColor = _parseColor(
-        const String.fromEnvironment('CARD_LITE_COLOR',
-            defaultValue: '0xFFF3EBF0'),
-        const Color.fromRGBO(243, 235, 240, 1));
+      const String.fromEnvironment(
+        'CARD_LITE_COLOR',
+        defaultValue: '0xFFF3EBF0',
+      ),
+      const Color.fromRGBO(243, 235, 240, 1),
+    );
 
     cardthemeDark = CardTheme(color: cardDarkColor);
     cardthemelite = CardTheme(color: cardLiteColor);
 
     // ElevatedButton colors
     Color buttonBackgroundColor = _parseColor(
-        const String.fromEnvironment('BUTTON_BACKGROUND_COLOR',
-            defaultValue: '0xFF2568FA'),
-        const Color.fromARGB(255, 37, 104, 250));
+      const String.fromEnvironment(
+        'BUTTON_BACKGROUND_COLOR',
+        defaultValue: '0xFF2568FA',
+      ),
+      const Color.fromARGB(255, 37, 104, 250),
+    );
 
     Color buttonShadowColor = _parseColor(
-        const String.fromEnvironment('BUTTON_SHADOW_COLOR',
-            defaultValue: '0xFFEB6B03'),
-        const Color.fromARGB(255, 235, 107, 3));
+      const String.fromEnvironment(
+        'BUTTON_SHADOW_COLOR',
+        defaultValue: '0xFFEB6B03',
+      ),
+      const Color.fromARGB(255, 235, 107, 3),
+    );
 
     elevatedButtonTheme = ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-          elevation: double.tryParse(const String.fromEnvironment(
-                  'BUTTON_ELEVATION',
-                  defaultValue: '8.0')) ??
-              8.0,
-          shadowColor: buttonShadowColor,
-          backgroundColor: buttonBackgroundColor,
-          disabledBackgroundColor: Colors.deepOrange.withOpacity(0.4),
-          disabledForegroundColor: Colors.deepOrange),
+        elevation:
+            double.tryParse(
+              const String.fromEnvironment(
+                'BUTTON_ELEVATION',
+                defaultValue: '8.0',
+              ),
+            ) ??
+            8.0,
+        shadowColor: buttonShadowColor,
+        backgroundColor: buttonBackgroundColor,
+        disabledBackgroundColor: Colors.deepOrange.withOpacity(0.4),
+        disabledForegroundColor: Colors.deepOrange,
+      ),
     );
 
     // Debug log
@@ -500,93 +615,136 @@ static void _setupCommonTunisieConfig() {
       print('==========================================');
     }
   }
-static void _setupCommonZenifyConfig() {
+
+  static void _setupCommonZenifyConfig() {
     showconversation = false;
 
     // API URL
-    baseApiUrl = const String.fromEnvironment('API_URL',
-        defaultValue: 'https://api.zenifytrip.com');
+    baseApiUrl = const String.fromEnvironment(
+      'API_URL',
+      defaultValue: 'https://api.zenifytrip.com',
+    );
     // baseApiUrl = 'https://api.staging.zenifytrip.com'; // Uncomment for staging
 
     // App title & branding
-    title = const String.fromEnvironment('APP_TITLE',
-        defaultValue: 'S T A G I N G');
+    title = const String.fromEnvironment(
+      'APP_TITLE',
+      defaultValue: 'S T A G I N G',
+    );
 
-    imagePath = const String.fromEnvironment('IMAGE_PATH',
-        defaultValue: 'assets/icon/zenify.png');
+    imagePath = const String.fromEnvironment(
+      'IMAGE_PATH',
+      defaultValue: 'assets/icon/zenify.png',
+    );
 
     // Colors
     primarySwatch = _parseColor(
-        const String.fromEnvironment('PRIMARY_SWATCH',
-            defaultValue: '0xFFBE8916'),
-        const Color.fromARGB(255, 190, 137, 22));
+      const String.fromEnvironment(
+        'PRIMARY_SWATCH',
+        defaultValue: '0xFFBE8916',
+      ),
+      const Color.fromARGB(255, 190, 137, 22),
+    );
 
     primarySwatchlite = _parseColor(
-        const String.fromEnvironment('PRIMARY_SWATCH_LITE',
-            defaultValue: '0xFFEB5F52'),
-        const Color.fromARGB(255, 235, 95, 82));
+      const String.fromEnvironment(
+        'PRIMARY_SWATCH_LITE',
+        defaultValue: '0xFFEB5F52',
+      ),
+      const Color.fromARGB(255, 235, 95, 82),
+    );
 
     primary = _parseColor(
-        const String.fromEnvironment('PRIMARY_COLOR',
-            defaultValue: '0xFFFF6912'),
-        const Color.fromARGB(255, 255, 105, 18));
+      const String.fromEnvironment('PRIMARY_COLOR', defaultValue: '0xFFFF6912'),
+      const Color.fromARGB(255, 255, 105, 18),
+    );
 
     // FloatingActionButton
     floatingActionButtonTheme = FloatingActionButtonThemeData(
       backgroundColor: _parseColor(
-          const String.fromEnvironment('FAB_BACKGROUND_COLOR',
-              defaultValue: '0xFFA502C5'),
-          const Color.fromARGB(255, 165, 2, 197)),
+        const String.fromEnvironment(
+          'FAB_BACKGROUND_COLOR',
+          defaultValue: '0xFFA502C5',
+        ),
+        const Color.fromARGB(255, 165, 2, 197),
+      ),
       foregroundColor: _parseColor(
-          const String.fromEnvironment('FAB_FOREGROUND_COLOR',
-              defaultValue: '0xFFFFFFFF'),
-          Colors.white),
-      elevation: double.tryParse(const String.fromEnvironment('FAB_ELEVATION',
-              defaultValue: '4.0')) ??
+        const String.fromEnvironment(
+          'FAB_FOREGROUND_COLOR',
+          defaultValue: '0xFFFFFFFF',
+        ),
+        Colors.white,
+      ),
+      elevation:
+          double.tryParse(
+            const String.fromEnvironment('FAB_ELEVATION', defaultValue: '4.0'),
+          ) ??
           4.0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(double.tryParse(
-                const String.fromEnvironment('FAB_BORDER_RADIUS',
-                    defaultValue: '12.0')) ??
-            12.0),
+        borderRadius: BorderRadius.circular(
+          double.tryParse(
+                const String.fromEnvironment(
+                  'FAB_BORDER_RADIUS',
+                  defaultValue: '12.0',
+                ),
+              ) ??
+              12.0,
+        ),
       ),
     );
 
     // Card Themes
     Color cardDarkColor = _parseColor(
-        const String.fromEnvironment('CARD_DARK_COLOR',
-            defaultValue: '0xFFE9B50B'),
-        const Color.fromARGB(255, 233, 181, 11));
+      const String.fromEnvironment(
+        'CARD_DARK_COLOR',
+        defaultValue: '0xFFE9B50B',
+      ),
+      const Color.fromARGB(255, 233, 181, 11),
+    );
 
     Color cardLiteColor = _parseColor(
-        const String.fromEnvironment('CARD_LITE_COLOR',
-            defaultValue: '0xFFF3EBF0'),
-        const Color.fromRGBO(243, 235, 240, 1));
+      const String.fromEnvironment(
+        'CARD_LITE_COLOR',
+        defaultValue: '0xFFF3EBF0',
+      ),
+      const Color.fromRGBO(243, 235, 240, 1),
+    );
 
     cardthemeDark = CardTheme(color: cardDarkColor);
     cardthemelite = CardTheme(color: cardLiteColor);
 
     // ElevatedButton Theme
     Color buttonBackgroundColor = _parseColor(
-        const String.fromEnvironment('BUTTON_BACKGROUND_COLOR',
-            defaultValue: '0xFFCB9F6E'),
-        const Color.fromARGB(255, 203, 163, 110));
+      const String.fromEnvironment(
+        'BUTTON_BACKGROUND_COLOR',
+        defaultValue: '0xFFCB9F6E',
+      ),
+      const Color.fromARGB(255, 203, 163, 110),
+    );
 
     Color buttonShadowColor = _parseColor(
-        const String.fromEnvironment('BUTTON_SHADOW_COLOR',
-            defaultValue: '0xFF01226B'),
-        const Color.fromARGB(255, 1, 34, 107));
+      const String.fromEnvironment(
+        'BUTTON_SHADOW_COLOR',
+        defaultValue: '0xFF01226B',
+      ),
+      const Color.fromARGB(255, 1, 34, 107),
+    );
 
     elevatedButtonTheme = ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-          elevation: double.tryParse(const String.fromEnvironment(
-                  'BUTTON_ELEVATION',
-                  defaultValue: '8.0')) ??
-              8.0,
-          shadowColor: buttonShadowColor,
-          backgroundColor: buttonBackgroundColor,
-          disabledBackgroundColor: Colors.deepOrange.withOpacity(0.4),
-          disabledForegroundColor: Colors.deepOrange),
+        elevation:
+            double.tryParse(
+              const String.fromEnvironment(
+                'BUTTON_ELEVATION',
+                defaultValue: '8.0',
+              ),
+            ) ??
+            8.0,
+        shadowColor: buttonShadowColor,
+        backgroundColor: buttonBackgroundColor,
+        disabledBackgroundColor: Colors.deepOrange.withOpacity(0.4),
+        disabledForegroundColor: Colors.deepOrange,
+      ),
     );
 
     // Debug log
@@ -601,66 +759,95 @@ static void _setupCommonZenifyConfig() {
   }
 
   static void _setupCommonSunshineConfig() {
- 
-    imagePath = const String.fromEnvironment('IMAGE_PATH',
-        defaultValue: 'assets/sunshineLogo.png');
+    imagePath = const String.fromEnvironment(
+      'IMAGE_PATH',
+      defaultValue: 'assets/sunshineLogo.png',
+    );
 
-    imagePathpdf = const String.fromEnvironment('IMAGE_PATH_PDF',
-        defaultValue: 'assets/va.png');
+    imagePathpdf = const String.fromEnvironment(
+      'IMAGE_PATH_PDF',
+      defaultValue: 'assets/va.png',
+    );
 
-    AndroidLink = const String.fromEnvironment('ANDROID_LINK',
-        defaultValue:
-            'https://play.google.com/store/apps/details?id=com.zenify_app');
+    AndroidLink = const String.fromEnvironment(
+      'ANDROID_LINK',
+      defaultValue:
+          'https://play.google.com/store/apps/details?id=com.zenify_app',
+    );
 
-    IosLink = const String.fromEnvironment('IOS_LINK',
-        defaultValue: 'https://apps.apple.com/us/app/shg-guide/id6736649921');
+    IosLink = const String.fromEnvironment(
+      'IOS_LINK',
+      defaultValue: 'https://apps.apple.com/us/app/shg-guide/id6736649921',
+    );
 
-    title = const String.fromEnvironment('APP_TITLE',
-        defaultValue: 'S u n S h i n e ');
+    title = const String.fromEnvironment(
+      'APP_TITLE',
+      defaultValue: 'S u n S h i n e ',
+    );
 
     // Parse boolean from string
     showconversation =
-        const String.fromEnvironment('SHOW_CONVERSATION', defaultValue: 'false')
-                .toLowerCase() ==
-            'true';
+        const String.fromEnvironment(
+          'SHOW_CONVERSATION',
+          defaultValue: 'false',
+        ).toLowerCase() ==
+        'true';
 
     // Parse colors from hex strings
     primarySwatch = _parseColor(
-        const String.fromEnvironment('PRIMARY_SWATCH',
-            defaultValue: '0xFFEEA804'),
-        const Color.fromARGB(255, 238, 168, 4));
+      const String.fromEnvironment(
+        'PRIMARY_SWATCH',
+        defaultValue: '0xFFEEA804',
+      ),
+      const Color.fromARGB(255, 238, 168, 4),
+    );
 
     primarySwatchlite = _parseColor(
-        const String.fromEnvironment('PRIMARY_SWATCH_LITE',
-            defaultValue: '0xFFEB5F52'),
-        const Color(0xFFEB5F52));
+      const String.fromEnvironment(
+        'PRIMARY_SWATCH_LITE',
+        defaultValue: '0xFFEB5F52',
+      ),
+      const Color(0xFFEB5F52),
+    );
 
     primary = _parseColor(
-        const String.fromEnvironment('PRIMARY_COLOR',
-            defaultValue: '0xFFFF6912'),
-        const Color.fromARGB(255, 255, 105, 18));
+      const String.fromEnvironment('PRIMARY_COLOR', defaultValue: '0xFFFF6912'),
+      const Color.fromARGB(255, 255, 105, 18),
+    );
 
     // FloatingActionButton colors
     Color fabBackgroundColor = _parseColor(
-        const String.fromEnvironment('FAB_BACKGROUND_COLOR',
-            defaultValue: '0xFFF34A08'),
-        const Color.fromARGB(255, 243, 74, 8));
+      const String.fromEnvironment(
+        'FAB_BACKGROUND_COLOR',
+        defaultValue: '0xFFF34A08',
+      ),
+      const Color.fromARGB(255, 243, 74, 8),
+    );
 
     Color fabForegroundColor = _parseColor(
-        const String.fromEnvironment('FAB_FOREGROUND_COLOR',
-            defaultValue: '0xFFFFFFFF'),
-        Colors.white);
+      const String.fromEnvironment(
+        'FAB_FOREGROUND_COLOR',
+        defaultValue: '0xFFFFFFFF',
+      ),
+      Colors.white,
+    );
 
     // Card theme colors
     Color cardDarkColor = _parseColor(
-        const String.fromEnvironment('CARD_DARK_COLOR',
-            defaultValue: '0xFFE9B50B'),
-        const Color.fromARGB(255, 233, 181, 11));
+      const String.fromEnvironment(
+        'CARD_DARK_COLOR',
+        defaultValue: '0xFFE9B50B',
+      ),
+      const Color.fromARGB(255, 233, 181, 11),
+    );
 
     Color cardLiteColor = _parseColor(
-        const String.fromEnvironment('CARD_LITE_COLOR',
-            defaultValue: '0xFFF3EBF0'),
-        const Color.fromRGBO(243, 235, 240, 1));
+      const String.fromEnvironment(
+        'CARD_LITE_COLOR',
+        defaultValue: '0xFFF3EBF0',
+      ),
+      const Color.fromRGBO(243, 235, 240, 1),
+    );
 
     cardthemeDark = CardTheme(color: cardDarkColor);
     cardthemelite = CardTheme(color: cardLiteColor);
@@ -668,38 +855,56 @@ static void _setupCommonZenifyConfig() {
     floatingActionButtonTheme = FloatingActionButtonThemeData(
       backgroundColor: fabBackgroundColor,
       foregroundColor: fabForegroundColor,
-      elevation: double.tryParse(const String.fromEnvironment('FAB_ELEVATION',
-              defaultValue: '4.0')) ??
+      elevation:
+          double.tryParse(
+            const String.fromEnvironment('FAB_ELEVATION', defaultValue: '4.0'),
+          ) ??
           4.0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(double.tryParse(
-                const String.fromEnvironment('FAB_BORDER_RADIUS',
-                    defaultValue: '12.0')) ??
-            12.0),
+        borderRadius: BorderRadius.circular(
+          double.tryParse(
+                const String.fromEnvironment(
+                  'FAB_BORDER_RADIUS',
+                  defaultValue: '12.0',
+                ),
+              ) ??
+              12.0,
+        ),
       ),
     );
 
     // ElevatedButton colors
     Color buttonBackgroundColor = _parseColor(
-        const String.fromEnvironment('BUTTON_BACKGROUND_COLOR',
-            defaultValue: '0xFFFF4500'),
-        Colors.deepOrange);
+      const String.fromEnvironment(
+        'BUTTON_BACKGROUND_COLOR',
+        defaultValue: '0xFFFF4500',
+      ),
+      Colors.deepOrange,
+    );
 
     Color buttonShadowColor = _parseColor(
-        const String.fromEnvironment('BUTTON_SHADOW_COLOR',
-            defaultValue: '0xFFFF4500'),
-        Colors.deepOrange);
+      const String.fromEnvironment(
+        'BUTTON_SHADOW_COLOR',
+        defaultValue: '0xFFFF4500',
+      ),
+      Colors.deepOrange,
+    );
 
     elevatedButtonTheme = ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-          elevation: double.tryParse(const String.fromEnvironment(
-                  'BUTTON_ELEVATION',
-                  defaultValue: '8.0')) ??
-              8.0,
-          shadowColor: buttonShadowColor,
-          backgroundColor: buttonBackgroundColor,
-          disabledBackgroundColor: Colors.deepOrange.withOpacity(0.4),
-          disabledForegroundColor: Colors.deepOrange),
+        elevation:
+            double.tryParse(
+              const String.fromEnvironment(
+                'BUTTON_ELEVATION',
+                defaultValue: '8.0',
+              ),
+            ) ??
+            8.0,
+        shadowColor: buttonShadowColor,
+        backgroundColor: buttonBackgroundColor,
+        disabledBackgroundColor: Colors.deepOrange.withOpacity(0.4),
+        disabledForegroundColor: Colors.deepOrange,
+      ),
     );
 
     if (kDebugMode) {
@@ -714,22 +919,24 @@ static void _setupCommonZenifyConfig() {
     }
   }
 
-
   static void _validateApiUrl() {
     if (baseApiUrl.isEmpty) {
       throw Exception(
-          'baseApiUrl is empty! Make sure to provide API_URL via --dart-define');
+        'baseApiUrl is empty! Make sure to provide API_URL via --dart-define',
+      );
     }
 
     try {
       final uri = Uri.parse(baseApiUrl);
       if (uri.host.isEmpty) {
         throw Exception(
-            'Invalid baseApiUrl: "$baseApiUrl" - no host specified');
+          'Invalid baseApiUrl: "$baseApiUrl" - no host specified',
+        );
       }
       if (!uri.hasScheme || (!uri.scheme.startsWith('http'))) {
         throw Exception(
-            'Invalid baseApiUrl: "$baseApiUrl" - must start with http:// or https://');
+          'Invalid baseApiUrl: "$baseApiUrl" - must start with http:// or https://',
+        );
       }
     } catch (e) {
       throw Exception('Invalid baseApiUrl: "$baseApiUrl" - ${e.toString()}');

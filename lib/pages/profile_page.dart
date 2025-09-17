@@ -8,7 +8,6 @@ import 'package:zenifytrip_guide/env.dart';
 import 'package:zenifytrip_guide/provider/location_provider.dart';
 import 'package:provider/provider.dart' as provider;
 
-
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
 
@@ -23,44 +22,22 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    _initSocket();
-    Future.microtask(() {
-      final authState = ref.read(zenifyAuth.authProvider);
-      final pictureUrl = authState.user?.picture;
-
     
-    });
+   
   }
 
-  Future<void> _initSocket() async {
-    // Initialize the socket
-  // final authCookie = await zenifyAuth.ZenifyAuth.authRepo.getCookieValue(
-  //     'https://api.staging.zenifytrip.com',
-  //     'ZENIFY_SESSION_ID',
-  //   );
-  //   // authCookie = await zenifyAuth.ZenifyAuth.authRepo.getAuthCookie();
-  //   await zenifyAuth.SocketIOManager.instance.initialize(
-  //     url: 'https://api.staging.zenifytrip.com',
-  //   );
 
-    print("Auth*Cookie: $authCookie");
-    // Get the socket id
-    setState(() {
-    //  socketId = zenifyAuth.SocketIOManager.instance.socket.id;
-      print("socketId*socketId: $socketId");
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(zenifyAuth.authProvider);
     final authState = ref.watch(zenifyAuth.authProvider);
     print(authState.user?.picture);
-    final locationProvider = context.read<LocationProvider>();
-    locationProvider.setCustomMapPin(
-        "${AppEnvironment.baseApiUrl}/assets/uploads/traveller/${authState.user?.picture}");
-    locationProvider.setPictureUrl("${AppEnvironment.baseApiUrl}/assets/uploads/traveller/${authState.user?.picture}");
-    //print("Auth Cookie: $authCookie");
+    // final locationProvider = context.read<LocationProvider>();
+    // locationProvider.setCustomMapPin(
+    //     "${AppEnvironment.baseApiUrl}/assets/uploads/traveller/${authState.user?.picture}");
+    // locationProvider.setPictureUrl("${AppEnvironment.baseApiUrl}/assets/uploads/traveller/${authState.user?.picture}");
+    // //print("Auth Cookie: $authCookie");
     return Scaffold(
       appBar: AppBar(title: Text('Profile s${authCookie ?? "dd"}')),
       body: Padding(

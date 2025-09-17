@@ -69,7 +69,8 @@ class LocationProvider with ChangeNotifier {
   // 🔐 SECURE: Store API keys in environment variables or secure storage
   static const String _googleMapsApiKey = String.fromEnvironment(
     'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=',
-    defaultValue: 'AIzaSyBiE7onmrq11reD-hX0aNi4ouxNKzue_WQ',
+    defaultValue:
+        'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=-hX0aNi4ouxNKzue_WQ',
   );
   static const String _openRouteApiKey = String.fromEnvironment(
     'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=',
@@ -81,10 +82,10 @@ class LocationProvider with ChangeNotifier {
   LocationProvider() {
     _location = Location();
     _marker = <MarkerId, Marker>{};
-    if (_googleMapsApiKey !=
-        'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=') {
-      polylinePoints = PolylinePoints(apiKey: _googleMapsApiKey);
-    }
+    // Same key can be used for both
+    PolylinePoints polylinePoints = PolylinePoints(
+      apiKey: "AIzaSyBiE7onmrq11reD-hX0aNi4ouxNKzue_WQ", // Your Google API key
+    );
   }
 
   // 🆕 NEW: Start real-time location tracking
@@ -171,41 +172,66 @@ class LocationProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<Uint8List> _circleCrop(Uint8List imageBytes, {int size = 200}) async {
+Future<Uint8List> _circleCrop(Uint8List imageBytes, {int size = 200}) async {
     final img.Image? original = img.decodeImage(imageBytes);
     if (original == null) throw Exception("Failed to decode image");
 
+    // Resize and crop to square
     final img.Image resized = img.copyResizeCropSquare(original, size: size);
 
+    // Create new image with white background
     final circleImage = img.Image(width: size, height: size);
-    circleImage.clear(img.ColorUint8(0));
+    // Fill with white background
+    img.fill(circleImage, color: img.ColorRgb8(255, 255, 255));
 
     final centerX = size ~/ 2;
     final centerY = size ~/ 2;
     final radius = size ~/ 2;
+    const borderThickness = 3;
 
     for (int y = 0; y < size; y++) {
       for (int x = 0; x < size; x++) {
         final dx = x - centerX;
         final dy = y - centerY;
-        if (dx * dx + dy * dy <= radius * radius) {
+        final distance = sqrt(dx * dx + dy * dy);
+
+        if (distance <= radius) {
+          // Inside circle → copy pixel from resized image
           circleImage.setPixel(x, y, resized.getPixel(x, y));
-        } else {
-          circleImage.setPixel(x, y, img.ColorUint8(0));
         }
+        // Outside circle remains white (already filled with white background)
       }
     }
 
+    // Alternative with border (uncomment if you want a white border):
+    /*
+  for (int y = 0; y < size; y++) {
+    for (int x = 0; x < size; x++) {
+      final dx = x - centerX;
+      final dy = y - centerY;
+      final distance = sqrt(dx * dx + dy * dy);
+
+      if (distance <= radius - borderThickness) {
+        // Inside circle (excluding border area) → copy pixel from resized image
+        circleImage.setPixel(x, y, resized.getPixel(x, y));
+      } else if (distance <= radius) {
+        // Border area → white border
+        circleImage.setPixel(x, y, img.ColorRgb8(255, 255, 255));
+      }
+      // Outside circle remains white (already filled)
+    }
+  }
+  */
+
     return Uint8List.fromList(img.encodePng(circleImage));
   }
-
   // 🆕 NEW: Update current location marker
   void _updateCurrentLocationMarker(LatLng position) async {
     if (_marker == null) return;
     final pictureUrl = _pictureUrl;
     //"https://api.staging.zenifytrip.com/assets/uploads/traveller/jpeg_20250912_155522_4716816059881589195-zt-20250912155524.jpg";
 
-    if (pictureUrl != null ) {
+    if (pictureUrl != null && pictureUrl.isNotEmpty) {
       // Circular crop
       final Uint8List imageBytes = await _loadNetworkImage(pictureUrl);
       final Uint8List circularBytes = await _circleCrop(imageBytes, size: 200);
@@ -245,9 +271,9 @@ class LocationProvider with ChangeNotifier {
     if (_destinationPosition == null || _locationPosition == null) return;
 
     debugPrint('🔄 Updating route from current position...');
-
+    createRoutingLineWithFallbacks(_destinationPosition!, Colors.red);
     // Use the working route method for reliable updates
-    await createWorkingRoute(_destinationPosition!, Colors.blue);
+    //  await createWorkingRoute(_destinationPosition!, Colors.blue);
   }
 
   // 🆕 NEW: Stop real-time location tracking
@@ -303,15 +329,16 @@ class LocationProvider with ChangeNotifier {
       infoWindow: const InfoWindow(title: 'Destination'),
       onDragEnd: (LatLng newPosition) async {
         _destinationPosition = newPosition;
-        await createWorkingRoute(newPosition, Colors.blue);
+        // await createWorkingRoute(newPosition, Colors.blue);
+        await createRoutingLineWithFallbacks(position, Colors.red);
       },
     );
 
     _marker![destinationMarkerId] = destinationMarker;
 
     // Create initial route and start tracking if not already started
-    createWorkingRoute(position, Colors.blue);
-
+    // createWorkingRoute(position, Colors.blue);
+    createRoutingLineWithFallbacks(position, Colors.red);
     if (!_isTrackingEnabled) {
       startLocationTracking();
     }
@@ -562,13 +589,15 @@ class LocationProvider with ChangeNotifier {
     if (response.statusCode == 200) {
       return response.bodyBytes;
     } else {
-      throw Exception('Failed to load network image $url');
+      throw Exception('Failed to load network image');
     }
   }
+
   void setPictureUrl(String? url) {
     _pictureUrl = url;
     notifyListeners();
   }
+
   // Set custom map pins
   Future<void> setCustomMapPin(String pictureUrl) async {
     try {
@@ -576,7 +605,6 @@ class LocationProvider with ChangeNotifier {
       //   const ImageConfiguration(devicePixelRatio: 2.5),
       //   'assets/location.png',
       // );
-    
 
       if (pictureUrl != null && pictureUrl.isNotEmpty) {
         final Uint8List imageBytes = await _loadNetworkImage(pictureUrl);
@@ -654,18 +682,18 @@ class LocationProvider with ChangeNotifier {
 
     debugPrint('🚀 Creating route from $_locationPosition to $destination');
 
-    // Method 1: Try Google Directions API
-    if (_googleMapsApiKey !=
-        'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=') {
-      bool googleSuccess = await _tryGoogleDirections(destination, color);
-      if (googleSuccess) {
-        debugPrint('✅ Google Directions API worked');
-        return;
-      }
-    }
+    // // Method 1: Try Google Directions API
+    // if (_googleMapsApiKey ==
+    //     'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=') {
+    //   bool googleSuccess = await _tryGoogleDirections(destination, color);
+    //   if (googleSuccess) {
+    //     debugPrint('✅ Google Directions API worked');
+    //     return;
+    //   }
+    // }
 
     // Method 2: Try OpenRoute Service
-    if (_openRouteApiKey !=
+    if (_openRouteApiKey ==
         'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImI3MDMxODRmN2Q5MzQ1ZWVhMWM2MWYxNTc4YTNiYTRhIiwiaCI6Im11cm11cjY0In0=') {
       debugPrint('⚠️ Google failed, trying OpenRoute Service...');
       bool openRouteSuccess = await _tryOpenRouteService(destination, color);
@@ -857,10 +885,10 @@ class LocationProvider with ChangeNotifier {
       _locationPosition!,
       destination,
     );
-
+    createRoutingLineWithFallbacks(destination, color);
     final Polyline polyline = Polyline(
       polylineId: const PolylineId('working_route'),
-      color: color,
+      color: _getRouteColor(destination),
       width: 5,
       points: professionalRoute,
       consumeTapEvents: true,

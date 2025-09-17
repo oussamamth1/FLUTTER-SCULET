@@ -24,8 +24,7 @@ class AppRoutConfig {
         GoRoute(
           path: '/',
           name: AppRouteConst.home,
-          builder:
-              (BuildContext context, GoRouterState state) => const HomePage(),
+          builder: (BuildContext context, GoRouterState state) => HomePage(),
           routes: <RouteBase>[
             GoRoute(
               name: AppRouteConst.details,
@@ -47,10 +46,13 @@ class AppRoutConfig {
               path: '/login',
               builder:
                   (BuildContext context, GoRouterState state) => LoginScreen(
+                    backgroundImage:
+                        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTKfP5aLyOd2XJQEwo54_P5a9fM7iOwOZzK4nl6Zj6Ydg2ZKFCbXR1C7hIVEg7iP-mTZ7FXrkpFAoolYClhq4UeAm9AO5W03VNuJSnYPBwcyg",
+
                     snackBarColor: Colors.green, // ✅ Custom SnackBar color
                     showForgotPassword: true, // ✅ Show Forgot Password
                     canRegister: true,
-           onRegister: () => context.go('/register'),
+                    onRegister: () => context.go('/register'),
                     onForgotPassword: () {
                       // ✅ Your forgot password logic
                       print("Forgot Password Clicked");
@@ -68,6 +70,8 @@ class AppRoutConfig {
                     canLogin: true,
                     requireTermsAcceptance:
                         true, // Optional: require terms acceptance
+                    backgroundImage:
+                        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTKfP5aLyOd2XJQEwo54_P5a9fM7iOwOZzK4nl6Zj6Ydg2ZKFCbXR1C7hIVEg7iP-mTZ7FXrkpFAoolYClhq4UeAm9AO5W03VNuJSnYPBwcyg",
                     onLogin: () {
                       // Navigate back to login page
                       context.go('/login');

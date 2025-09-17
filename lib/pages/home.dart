@@ -6,16 +6,18 @@ import 'package:go_router/go_router.dart';
 import 'package:zenifytrip_guide/env.dart';
 import 'package:zenifytrip_guide/features/task/TaskService.dart';
 import 'package:zenifytrip_guide/features/task/tasklist.dart';
-import 'package:zenifytrip_guide/features/task/taskpage.dart';
-import 'package:zenifytrip_guide/map.dart';
-import 'package:zenifytrip_guide/pages/about.dart';
+import 'package:zenifytrip_guide/provider/location_provider.dart';
+import 'package:zenifytrip_guide/provider/mapLoader.dart';
+import 'package:zenifytrip_guide/provider/mapSecreen..dart';
 import 'package:zenifytrip_guide/screens/explore.dart';
 import 'package:zenifytrip_guide/theme.dart';
-import '../features/auth/presentation/providers/auth_provider.dart';
+import '../features/auth/presentation/providers/auth_provider.dart' hide authProvider;
 import 'discovery_page.dart';
-import 'package:zenify_auth/zenify_auth.dart';
 import 'message_page.dart';
 import 'profile_page.dart';
+import 'package:zenify_auth/zenify_auth.dart';
+import 'package:provider/provider.dart' as p;
+
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -30,15 +32,9 @@ class _HomePageState extends ConsumerState<HomePage>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
+  LocationProvider? _locationProvider;
+  bool _locationInitialized = false;
   final taskService = TaskService();
-
-  final List<Widget> _pages = [
-    const DiscoveryPage(),
-    TaskListPage(),
-    ExplorePage(),
-    const MessagePage(),
-    ProfilePage(),
-  ];
 
   // Socket state
   bool _isSocketReconnecting = false;
@@ -46,7 +42,11 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   void initState() {
     super.initState();
-    SocketIOManager.instance.initialize(url: "https://api.staging.zenifytrip.com");  
+
+    SocketIOManager.instance.initialize(
+      url: "https://api.staging.zenifytrip.com",
+    );
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -55,24 +55,26 @@ class _HomePageState extends ConsumerState<HomePage>
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _animationController.forward();
-    // ZenifyAuth.initialize(
-    //       baseUrl: "https://api.staging.zenifytrip.com", // project-specific URL
-    //       fromJson: (json) => User.fromJson(json),
-    //     );
-    //await SocketIOManager.instance.initSocket();
-    // Listen to socket connection/reconnection
+  }
 
-    //SocketIOManager.addConnectionListener(_onConnectionStatusChanged);
+  Future<void> _initializeLocationProvider(String url) async {
+    _locationProvider = LocationProvider();
+    _locationProvider!.setPictureUrl(
+      "https://api.staging.zenifytrip.com/assets/uploads/traveller/$url",
+    );
+    await _locationProvider!.initialization(startTracking: false);
+    if (mounted) {
+      await _locationProvider!.loadPositionsFromApi('', context);
+      setState(() {
+        _locationInitialized = true;
+      });
+    }
   }
 
   void _onConnectionChanged(bool isConnected) {
     if (mounted) {
       setState(() {
         _isSocketReconnecting = isConnected;
-        if (isConnected) {
-          // Reconnected - reload conversations
-          // socketManager.updateConversationListAndContentListener(_onConversation);
-        }
       });
     }
   }
@@ -80,6 +82,7 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   void dispose() {
     _animationController.dispose();
+    _locationProvider?.dispose();
     super.dispose();
   }
 
@@ -92,97 +95,140 @@ class _HomePageState extends ConsumerState<HomePage>
     }
   }
 
+  List<Widget> _getPages() {
+    if (!_locationInitialized || _locationProvider == null) {
+      return [
+        const DiscoveryPage(),
+        TaskListPage(),
+        const MapLoadingIndicator(), // Placeholder for map
+        const MessagePage(),
+        ProfilePage(),
+      ];
+    }
+
+    return [
+      const DiscoveryPage(),
+      TaskListPage(),
+p.ChangeNotifierProvider.value(
+        value: _locationProvider!,
+        child: const MapScreenContent(),),
+      //  MapScreenContent(),
+      const MessagePage(),
+      ProfilePage(),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
-    //  final user = ref.watch(authProvider);
-    final theme = Theme.of(context);
+    final authState = ref.watch(authProvider);
+
+    // Listen for socket changes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       SocketIOManager.instance.addConnectionChangeListener(
         _onConnectionChanged,
       );
+
+      // Initialize location provider only once when authenticated
+      if (authState.status == AuthStatus.authenticated &&
+          !_locationInitialized &&
+          authState.user?.picture != null) {
+        _initializeLocationProvider(authState.user!.picture!);
+      }
     });
-    return Scaffold(
-      backgroundColor: Color(0xFFF8F9FA),
-      body: Stack(
-        children: [
-          FadeTransition(
-            opacity: _fadeAnimation,
-            child: _pages[_selectedIndex],
-          ),
-          // Green circular overlay when socket reconnecting
-          if (_isSocketReconnecting)
-            Positioned(
-              top: 40,
-              left: 20,
-              child: Container(
-                width: 16,
-                height: 16,
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.green.withOpacity(0.5),
-                      blurRadius: 8,
-                      spreadRadius: 2,
-                    ),
-                  ],
+
+    switch (authState.status) {
+      case AuthStatus.loading:
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+
+      case AuthStatus.unauthenticated:
+        return const Scaffold(body: Center(child: Text("Please log in")));
+
+      case AuthStatus.authenticated:
+        return Scaffold(
+          backgroundColor: const Color(0xFFF8F9FA),
+          body: Stack(
+            children: [
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: IndexedStack(
+                  index: _selectedIndex,
+                  children: _getPages(),
                 ),
               ),
+              if (_isSocketReconnecting)
+                Positioned(
+                  top: 40,
+                  left: 20,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.green.withOpacity(0.5),
+                          blurRadius: 8,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          bottomNavigationBar: Container(
+            decoration: BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, -5),
+                ),
+              ],
             ),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
+            child: ConvexAppBar.badge(
+              badgeMargin: const EdgeInsets.only(bottom: 30, right: 40),
+              badgeColor: const Color(0xFFFF5722),
+              badgeTextColor: Colors.white,
+              {0: _getDiscoveryBadgeCount(), 3: _getMessageBadgeCount()},
+              style: TabStyle.titled,
+              backgroundColor: AppEnvironment.lightTheme.primaryColor,
+              activeColor: AppEnvironment.lightTheme.secondaryHeaderColor,
+              color: const Color(0xFF81C784),
+              items: const [
+                TabItem(
+                  icon: Icons.explore_outlined,
+                  activeIcon: Icons.explore,
+                  title: 'Discover',
+                ),
+                TabItem(
+                  icon: Icons.add_circle_outline,
+                  activeIcon: Icons.add_circle,
+                  title: 'Create',
+                ),
+                TabItem(
+                  icon: Icons.map_sharp,
+                  activeIcon: Icons.map_sharp,
+                  title: 'Map',
+                ),
+                TabItem(
+                  icon: Icons.chat_bubble_outline,
+                  activeIcon: Icons.chat_bubble,
+                  title: 'Messages',
+                ),
+                TabItem(
+                  icon: Icons.person_outline,
+                  activeIcon: Icons.person,
+                  title: 'Profile',
+                ),
+              ],
+              initialActiveIndex: _selectedIndex,
+              onTap: _onTabTapped,
             ),
-          ],
-        ),
-        child: ConvexAppBar.badge(
-          badgeMargin: const EdgeInsets.only(bottom: 30, right: 40),
-          badgeColor: const Color(0xFFFF5722),
-          badgeTextColor: Colors.white,
-          {0: _getDiscoveryBadgeCount(), 3: _getMessageBadgeCount()},
-          style: TabStyle.titled,
-          backgroundColor: AppEnvironment.lightTheme.primaryColor,
-          activeColor: AppEnvironment.lightTheme.secondaryHeaderColor,
-          color: const Color(0xFF81C784),
-          items: const [
-            TabItem(
-              icon: Icons.explore_outlined,
-              activeIcon: Icons.explore,
-              title: 'Discover',
-            ),
-            TabItem(
-              icon: Icons.add_circle_outline,
-              activeIcon: Icons.add_circle,
-              title: 'Create',
-            ),
-            TabItem(
-              icon: Icons.map_sharp,
-              activeIcon: Icons.map_sharp,
-              title: 'Map',
-            ),
-            TabItem(
-              icon: Icons.chat_bubble_outline,
-              activeIcon: Icons.chat_bubble,
-              title: 'Messages',
-            ),
-            TabItem(
-              icon: Icons.person_outline,
-              activeIcon: Icons.person,
-              title: 'Profile',
-            ),
-          ],
-          initialActiveIndex: _selectedIndex,
-          onTap: _onTabTapped,
-        ),
-      ),
-    );
+          ),
+        );
+    }
   }
 
   String _getDiscoveryBadgeCount() => '3';

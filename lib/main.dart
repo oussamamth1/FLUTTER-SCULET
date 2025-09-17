@@ -7,10 +7,12 @@ import 'package:zenifytrip_guide/features/ChatModulev2/SocketManagment.dart';
 import 'package:zenifytrip_guide/features/task/TaskService.dart';
 import 'package:zenifytrip_guide/features/task/task.dart';
 import 'package:zenifytrip_guide/map.dart';
+import 'package:zenifytrip_guide/pages/home.dart';
 import 'package:zenifytrip_guide/project/routes/app_rout_config.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:zenifytrip_guide/provider/location_provider.dart';
+import 'package:zenifytrip_guide/provider/mapSecreen..dart';
 import 'package:zenifytrip_guide/theme.dart';
 import 'package:go_router/go_router.dart';
 import 'package:zenify_auth/zenify_auth.dart' as zenifyAuth;
@@ -52,7 +54,7 @@ void main() async {
         providers: [
           pro.ChangeNotifierProvider(
             create: (context) => LocationProvider(),
-            child: GoogleMapPage(),
+            child: HomePage(),
           ),
         ],
         child: MyApp(),

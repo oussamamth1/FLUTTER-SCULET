@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "46171882567",
+    "project_id": "chatzenify",
+    "storage_bucket": "chatzenify.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:46171882567:android:db54cd819563a035871d62",
+        "android_client_info": {
+          "package_name": "com.example.zenifytrip_guide"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPDp_eHjSI0Z9YfN7QX61FRyH1zgh3m1w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

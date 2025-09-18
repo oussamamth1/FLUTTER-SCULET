@@ -1,4 +1,5 @@
 import 'package:convex_bottom_bar/convex_bottom_bar.dart';
+import 'package:firebase_ai/firebase_ai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,13 +12,14 @@ import 'package:zenifytrip_guide/provider/mapLoader.dart';
 import 'package:zenifytrip_guide/provider/mapSecreen..dart';
 import 'package:zenifytrip_guide/screens/explore.dart';
 import 'package:zenifytrip_guide/theme.dart';
-import '../features/auth/presentation/providers/auth_provider.dart' hide authProvider;
+import '../features/auth/presentation/providers/auth_provider.dart'
+    hide authProvider;
 import 'discovery_page.dart';
 import 'message_page.dart';
 import 'profile_page.dart';
 import 'package:zenify_auth/zenify_auth.dart';
 import 'package:provider/provider.dart' as p;
-
+import 'package:zenify_auth/zenify_auth.dart' as zenifyAuth;
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -39,6 +41,8 @@ class _HomePageState extends ConsumerState<HomePage>
   // Socket state
   bool _isSocketReconnecting = false;
 
+  // Provide a prompt that contains text
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +59,7 @@ class _HomePageState extends ConsumerState<HomePage>
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _animationController.forward();
+    ref.read(zenifyAuth.authProvider.notifier).fetchUserProfile();
   }
 
   Future<void> _initializeLocationProvider(String url) async {
@@ -62,6 +67,7 @@ class _HomePageState extends ConsumerState<HomePage>
     _locationProvider!.setPictureUrl(
       "https://api.staging.zenifytrip.com/assets/uploads/traveller/$url",
     );
+
     await _locationProvider!.initialization(startTracking: false);
     if (mounted) {
       await _locationProvider!.loadPositionsFromApi('', context);
@@ -109,9 +115,10 @@ class _HomePageState extends ConsumerState<HomePage>
     return [
       const DiscoveryPage(),
       TaskListPage(),
-p.ChangeNotifierProvider.value(
+      p.ChangeNotifierProvider.value(
         value: _locationProvider!,
-        child: const MapScreenContent(),),
+        child: const MapScreenContent(),
+      ),
       //  MapScreenContent(),
       const MessagePage(),
       ProfilePage(),
@@ -157,8 +164,8 @@ p.ChangeNotifierProvider.value(
               ),
               if (_isSocketReconnecting)
                 Positioned(
-                  top: 40,
-                  left: 20,
+                  top: 50,
+                  left: 30,
                   child: Container(
                     width: 16,
                     height: 16,
@@ -168,6 +175,31 @@ p.ChangeNotifierProvider.value(
                       boxShadow: [
                         BoxShadow(
                           color: Colors.green.withOpacity(0.5),
+                          blurRadius: 8,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              if (!_isSocketReconnecting)
+                Positioned(
+                  top: 40,
+                  left: 20,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 240, 75, 15),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color.fromARGB(
+                            255,
+                            125,
+                            3,
+                            3,
+                          ).withOpacity(0.5),
                           blurRadius: 8,
                           spreadRadius: 2,
                         ),

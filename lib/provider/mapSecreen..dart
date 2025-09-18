@@ -351,7 +351,7 @@ class _MapScreenContentState extends ConsumerState<MapScreenContent>
 
   Widget _buildInstructionsCard() {
     return Positioned(
-      bottom: 120,
+      top: 80,
       left: 16,
       right: 16,
       child: Container(
@@ -392,8 +392,8 @@ class _MapScreenContentState extends ConsumerState<MapScreenContent>
 
   Widget _buildControlButtons(LocationProvider model) {
     return Positioned(
-      bottom: 30,
-      right: 16,
+      bottom: 50,
+      left: 16,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -410,7 +410,7 @@ class _MapScreenContentState extends ConsumerState<MapScreenContent>
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           // My location button
           FloatingActionButton(
@@ -419,7 +419,7 @@ class _MapScreenContentState extends ConsumerState<MapScreenContent>
             backgroundColor: surfaceColor,
             child: const Icon(Icons.my_location, color: primaryColor),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           // Clear route button (if route exists)
           if (model.polylines.isNotEmpty)

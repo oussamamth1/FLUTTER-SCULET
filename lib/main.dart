@@ -16,7 +16,9 @@ import 'package:zenifytrip_guide/provider/mapSecreen..dart';
 import 'package:zenifytrip_guide/theme.dart';
 import 'package:go_router/go_router.dart';
 import 'package:zenify_auth/zenify_auth.dart' as zenifyAuth;
-
+import 'package:firebase_ai/firebase_ai.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
@@ -26,6 +28,8 @@ void main() async {
   Hive.registerAdapter(TaskAdapter());
   AppEnvironment.setupEnv(Environment.tunisie);
   WidgetsFlutterBinding.ensureInitialized();
+await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
 
   //   if (Firebase.apps.isEmpty) {
   //     await Firebase.initializeApp(

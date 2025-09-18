@@ -51,6 +51,21 @@ class AppRoutConfig {
               path: '/login',
               builder:
                   (BuildContext context, GoRouterState state) => LoginScreen(minPasswordLength :5,
+                    showLoginwithCode: true,
+                    onLoginwithCode: () {
+                      // Handle login with code action
+                      // For example, navigate to a code input screen
+                      // Navigator.of(context).push(
+                      //   MaterialPageRoute(
+                      //     builder: (context) => CodeLoginScreen(),
+                      //   ),
+                      // );
+                    },
+                    loginWithCodeText:
+                        'Login with Code', // Optional: customize text
+                    loginWithCodeButtonStyle: TextButton.styleFrom(
+                      foregroundColor: Colors.blue,
+                    ), // Optional: customize button style
                     backgroundImage:
                         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTKfP5aLyOd2XJQEwo54_P5a9fM7iOwOZzK4nl6Zj6Ydg2ZKFCbXR1C7hIVEg7iP-mTZ7FXrkpFAoolYClhq4UeAm9AO5W03VNuJSnYPBwcyg",
                     loginButtonText: "Sign In",

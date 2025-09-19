@@ -1,13 +1,16 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-
 import 'package:flutter/material.dart';
+import 'package:socket_io_riverpod/socket_io_riverpod.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:zenifytrip_guide/GoRouterRefreshStream.dart';
-import 'package:zenify_auth/zenify_auth.dart';
+import 'package:socket_io_riverpod/socket_io_riverpod.dart';
+
 import 'package:zenifytrip_guide/env.dart';
+import 'package:zenifytrip_guide/pages/CodeLoginScreen.dart';
 import 'package:zenifytrip_guide/pages/about.dart';
 import 'package:zenifytrip_guide/pages/discovery_page.dart';
 import 'package:zenifytrip_guide/pages/home.dart';
@@ -16,6 +19,8 @@ import 'package:zenifytrip_guide/pages/message_page.dart';
 import 'package:zenifytrip_guide/pages/profile_page.dart';
 import 'package:zenifytrip_guide/project/routes/app_rout_const.dart';
 import 'package:zenify_auth/zenify_auth.dart';
+import 'package:zenify_auth/zenify_auth.dart' as zenifyAuth;
+
 
 class AppRoutConfig {
   /// Returns a GoRouter configured with auth state from Riverpod
@@ -23,7 +28,9 @@ class AppRoutConfig {
     // Watch the auth state notifier
 
     final authNotifier = ref.watch(authProvider.notifier);
-
+    zenifyAuth.SocketIOManager.instance.initialize(
+      url: "https://api.staging.zenifytrip.com",
+    );
     return GoRouter(
       routes: <RouteBase>[
         GoRoute(
@@ -47,11 +54,67 @@ class AppRoutConfig {
                       DiscoveryPage(),
             ),
             GoRoute(
+              name: AppRouteConst.loginwithcode,
+              path: '/loginwithcode',
+              builder:
+                  (BuildContext context, GoRouterState state) => MessagePage(),
+
+              // CodeLoginScreen(
+              //   onCodeSubmitted: (code) async {
+              //     // Verify the code with your backend
+              //     try {
+              //       final success = await ref
+              //           .read(authProvider.notifier)
+              //           .verifyCode(code);
+              //       return success;
+              //     } catch (e) {
+              //       return false;
+              //     }
+              //   },
+              //   // Custom styling
+              //   logo: Image.asset('assets/logo.png', height: 60),
+              //   backgroundImage: 'https://example.com/background.jpg',
+              //   overlayColor: Colors.black.withOpacity(0.3),
+
+              //   // Input customization
+              //   codeLength: 4,
+              //   keyboardType:
+              //       TextInputType.text, // For alphanumeric codes
+              //   obscureCode: true, // Hide the entered code
+              //   inputWidth: 60,
+              //   inputHeight: 70,
+              //   inputSpacing: 16,
+              //   inputBorderRadius: 8,
+
+              //   // Button customization
+              //   submitButtonText: 'Verify Now',
+              //   resendButtonText: 'Send Again',
+              //   submitButtonStyle: ElevatedButton.styleFrom(
+              //     backgroundColor: Colors.green,
+              //     shape: RoundedRectangleBorder(
+              //       borderRadius: BorderRadius.circular(20),
+              //     ),
+              //   ),
+
+              //   // Behavior customization
+              //   autoSubmit: false, // Manual submission
+              //   showLoadingIndicator: true,
+              //   enableHapticFeedback: true,
+              //   autoFocus: true,
+
+              //   // Error handling
+              //   validationMessage: 'Please enter the complete code',
+              //   snackBarErrorColor: Colors.red.shade700,
+              //   snackBarSuccessColor: Colors.green.shade600,
+              // ),
+            ),
+            GoRoute(
               name: AppRouteConst.login,
               path: '/login',
               builder:
-                  (BuildContext context, GoRouterState state) => LoginScreen(minPasswordLength :5,
-                    showLoginwithCode: true,
+                  (BuildContext context, GoRouterState state) => LoginScreen(
+                    minPasswordLength: 5,
+                    showLoginwithCode: false,
                     onLoginwithCode: () {
                       // Handle login with code action
                       // For example, navigate to a code input screen
@@ -60,6 +123,7 @@ class AppRoutConfig {
                       //     builder: (context) => CodeLoginScreen(),
                       //   ),
                       // );
+                      context.go('/loginwithcode');
                     },
                     loginWithCodeText:
                         'Login with Code', // Optional: customize text
@@ -129,7 +193,10 @@ class AppRoutConfig {
               name: AppRouteConst.messages,
               path: 'messages',
               builder:
-                  (BuildContext context, GoRouterState state) => MessagePage(),
+                  (BuildContext context, GoRouterState state) => ChatScreen(
+                    conversationId: 'c153a884-ebb1-41eb-99cb-2b465491430b',
+                    conversationName: 'Team Chat',
+                  ),
             ),
             GoRoute(
               name: AppRouteConst.profile,
@@ -156,7 +223,9 @@ class AppRoutConfig {
         final currentPath = state.matchedLocation;
 
         final isAuthPage =
-            currentPath == '/login' || currentPath == '/register';
+            currentPath == '/login' ||
+            currentPath == '/register' ||
+            currentPath == '/loginwithcode';
 
         if (isLoading) return null;
         if (!isLoggedIn && !isAuthPage) return '/login';
@@ -272,7 +341,10 @@ class AppRoutConfig {
               onPressed: () async {
                 if (formKey.currentState!.validate()) {
                   Navigator.of(context).pop(); // Close the email dialog
-                  await sendPasswordResetEmailRequest(emailController.text,context);
+                  await sendPasswordResetEmailRequest(
+                    emailController.text,
+                    context,
+                  );
                 }
               },
             ),
@@ -282,7 +354,10 @@ class AppRoutConfig {
     );
   }
 
-static  Future<void> sendPasswordResetEmailRequest(String email,BuildContext context) async {
+  static Future<void> sendPasswordResetEmailRequest(
+    String email,
+    BuildContext context,
+  ) async {
     try {
       final response = await http.post(
         Uri.parse('${AppEnvironment.baseApiUrl}/api/auth/forgot-password'),
@@ -313,7 +388,10 @@ static  Future<void> sendPasswordResetEmailRequest(String email,BuildContext con
     }
   }
 
-  static Future<void> showResetDialogEmail(BuildContext context, String email) async {
+  static Future<void> showResetDialogEmail(
+    BuildContext context,
+    String email,
+  ) async {
     final TextEditingController resetTokenController = TextEditingController();
     final TextEditingController newPasswordController = TextEditingController();
     final TextEditingController confirmPasswordController =
@@ -473,7 +551,8 @@ static  Future<void> sendPasswordResetEmailRequest(String email,BuildContext con
                               ),
                               backgroundColor: Colors.green,
                             ),
-                          ); Navigator.of(context).pop();
+                          );
+                          Navigator.of(context).pop();
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

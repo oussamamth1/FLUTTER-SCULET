@@ -70,6 +70,9 @@ dev_dependencies:
 dependency_overrides:
   zenify_auth:
     path: C:/Users/oussa/zenify_auth
+  socket_io_riverpod:
+    path: C:/Users/oussa/socket_io_riverpod
+
     # path: ../auth-lib
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

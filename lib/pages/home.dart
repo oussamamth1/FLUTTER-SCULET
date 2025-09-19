@@ -20,6 +20,7 @@ import 'profile_page.dart';
 import 'package:zenify_auth/zenify_auth.dart';
 import 'package:provider/provider.dart' as p;
 import 'package:zenify_auth/zenify_auth.dart' as zenifyAuth;
+import 'package:socket_io_riverpod/socket_io_riverpod.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -46,10 +47,29 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final socketConnection = ref.read(socketConnectionProvider.notifier);
 
-    SocketIOManager.instance.initialize(
-      url: "https://api.staging.zenifytrip.com",
-    );
+      final config = SocketConfig(
+        url: 'https://api.staging.zenifytrip.com',
+        enableLogging: true,
+        token:
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInN1YiI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInVzZXJuYW1lIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsImVtYWlsIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbmlzdHJhdG9yIiwiZmlyc3ROYW1lIjoiT3Vzc2FtYSIsInBob25lIjoiMjA2NDA3ODMiLCJsYXN0TmFtZSI6Ik1ldGhuYW5pIiwiZXhwaXJlcyI6MTc1ODg5MjQxNywiY3JlYXRlZCI6MTc1ODI4NzYxNywiaWF0IjoxNzU4Mjg3NjE3LCJleHAiOjE3NTg4OTI0MTd9.iySsbRuzF8VPBWWnF7JubVENdQXYgrQj7vxWk4ZIBMA",
+      );
+
+      socketConnection.initialize(
+        config,
+        headersProvider: () async {
+          // final box = await Hive.openBox('cookieBox');
+          // final cookie = box.get('ZENIFY_SESSION_ID');
+          return {
+            if ("s" != null)
+              'Cookie':
+                  'ZENIFY_SESSION_ID=s%3ASla1K1XqSqHdG-aAvBQY5J5VYrDmloS0.C3oNfhHAvzRmzdnlWoaB%2BwDsacHXpRK9AY7pH2BCvSw; Expires=Sun, 19 Oct 2025 10:43:46 GMT; Path=/; HttpOnly',
+          };
+        },
+      );
+    });
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -107,7 +127,10 @@ class _HomePageState extends ConsumerState<HomePage>
         const DiscoveryPage(),
         TaskListPage(),
         const MapLoadingIndicator(), // Placeholder for map
-        const MessagePage(),
+        const ChatScreen(
+          conversationId: 'c153a884-ebb1-41eb-99cb-2b465491430b',
+          conversationName: 'Team Chat',
+        ),
         ProfilePage(),
       ];
     }
@@ -120,7 +143,11 @@ class _HomePageState extends ConsumerState<HomePage>
         child: const MapScreenContent(),
       ),
       //  MapScreenContent(),
-      const MessagePage(),
+      const ChatScreen(
+        conversationId: 'c153a884-ebb1-41eb-99cb-2b465491430b',
+        conversationName: 'Team Chat',
+      ),
+
       ProfilePage(),
     ];
   }
@@ -131,7 +158,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
     // Listen for socket changes
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      SocketIOManager.instance.addConnectionChangeListener(
+      zenifyAuth.SocketIOManager.instance.addConnectionChangeListener(
         _onConnectionChanged,
       );
 
@@ -152,6 +179,13 @@ class _HomePageState extends ConsumerState<HomePage>
 
       case AuthStatus.authenticated:
         return Scaffold(
+          // appBar: AppBar(
+          //   title: Text('Socket App'),
+          //   actions: [
+          //     // Show connection status
+          //     SocketStatusWidget(),
+          //   ],
+          // ),
           backgroundColor: const Color(0xFFF8F9FA),
           body: Stack(
             children: [

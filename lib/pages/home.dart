@@ -17,10 +17,11 @@ import '../features/auth/presentation/providers/auth_provider.dart'
 import 'discovery_page.dart';
 import 'message_page.dart';
 import 'profile_page.dart';
-import 'package:zenify_auth/zenify_auth.dart';
+import 'package:zenify_auth/zenify_auth.dart' hide SocketIOManager;
 import 'package:provider/provider.dart' as p;
 import 'package:zenify_auth/zenify_auth.dart' as zenifyAuth;
 import 'package:socket_io_riverpod/socket_io_riverpod.dart';
+import 'package:socket_io_riverpod/socket_io_riverpod.dart' as m;
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -34,42 +35,47 @@ class _HomePageState extends ConsumerState<HomePage>
   int _selectedIndex = 0;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-
+  late SocketIOManager socketManager;
   LocationProvider? _locationProvider;
   bool _locationInitialized = false;
   final taskService = TaskService();
 
   // Socket state
   bool _isSocketReconnecting = false;
-
+  Color colorconnction = Colors.transparent;
   // Provide a prompt that contains text
 
   @override
   void initState() {
     super.initState();
+    _initializeSocket();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final socketConnection = ref.read(socketConnectionProvider.notifier);
+      //   socketManager = SocketIOManager.instance;
 
-      final config = SocketConfig(
-        url: 'https://api.staging.zenifytrip.com',
-        enableLogging: true,
-        token:
-            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInN1YiI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInVzZXJuYW1lIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsImVtYWlsIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbmlzdHJhdG9yIiwiZmlyc3ROYW1lIjoiT3Vzc2FtYSIsInBob25lIjoiMjA2NDA3ODMiLCJsYXN0TmFtZSI6Ik1ldGhuYW5pIiwiZXhwaXJlcyI6MTc1ODg5MjQxNywiY3JlYXRlZCI6MTc1ODI4NzYxNywiaWF0IjoxNzU4Mjg3NjE3LCJleHAiOjE3NTg4OTI0MTd9.iySsbRuzF8VPBWWnF7JubVENdQXYgrQj7vxWk4ZIBMA",
-      );
+      _initializeSocket();
+      // final config = SocketConfig(
+      //   url: 'https://api.staging.zenifytrip.com',
+      //   enableLogging: true,
+      //   token:
+      //       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInN1YiI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInVzZXJuYW1lIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsImVtYWlsIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbmlzdHJhdG9yIiwiZmlyc3ROYW1lIjoiT3Vzc2FtYSIsInBob25lIjoiMjA2NDA3ODMiLCJsYXN0TmFtZSI6Ik1ldGhuYW5pIiwiZXhwaXJlcyI6MTc1ODg5MjQxNywiY3JlYXRlZCI6MTc1ODI4NzYxNywiaWF0IjoxNzU4Mjg3NjE3LCJleHAiOjE3NTg4OTI0MTd9.iySsbRuzF8VPBWWnF7JubVENdQXYgrQj7vxWk4ZIBMA",
+      // );
 
-      socketConnection.initialize(
-        config,
-        headersProvider: () async {
-          // final box = await Hive.openBox('cookieBox');
-          // final cookie = box.get('ZENIFY_SESSION_ID');
-          return {
-            if ("s" != null)
-              'Cookie':
-                  'ZENIFY_SESSION_ID=s%3ASla1K1XqSqHdG-aAvBQY5J5VYrDmloS0.C3oNfhHAvzRmzdnlWoaB%2BwDsacHXpRK9AY7pH2BCvSw; Expires=Sun, 19 Oct 2025 10:43:46 GMT; Path=/; HttpOnly',
-          };
-        },
-      );
+      // socketManager.configure(
+      //   config,
+      //   headersProvider: () async {
+      //     // final box = await Hive.openBox('cookieBox');
+      //     // final cookie = box.get('ZENIFY_SESSION_ID');
+      //     return {
+      //       if ("s" != null)
+      //         'Cookie':
+      //             'ZENIFY_SESSION_ID=s%3AUx9AGMQc-Jhljlo3wqJA_NDlkh-r_3bl.Uc56ZOF6oHHfXfDBQwMgluyGv9r315kjRbp040myYcI; Path=/; HttpOnly; Expires=Mon, 20 Oct 2025 13:28:26 GMT;',
+      //     };
+      //   },
+      // );
     });
+    // socketManager.initialize();
+
+    // Add connection state listener
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -80,6 +86,68 @@ class _HomePageState extends ConsumerState<HomePage>
     );
     _animationController.forward();
     ref.read(zenifyAuth.authProvider.notifier).fetchUserProfile();
+  }
+
+  void _initializeSocket() async {
+    // Configure socket
+    socketManager = SocketIOManager.instance;
+
+    final config = SocketConfig(
+      url: 'https://api.staging.zenifytrip.com',
+      enableLogging: true,
+      token:
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInN1YiI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInVzZXJuYW1lIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsImVtYWlsIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbmlzdHJhdG9yIiwiZmlyc3ROYW1lIjoiT3Vzc2FtYSIsInBob25lIjoiMjA2NDA3ODMiLCJsYXN0TmFtZSI6Ik1ldGhuYW5pIiwiZXhwaXJlcyI6MTc1ODg5MjQxNywiY3JlYXRlZCI6MTc1ODI4NzYxNywiaWF0IjoxNzU4Mjg3NjE3LCJleHAiOjE3NTg4OTI0MTd9.iySsbRuzF8VPBWWnF7JubVENdQXYgrQj7vxWk4ZIBMA",
+    );
+
+    socketManager.configure(
+      config,
+      headersProvider: () async {
+        // final box = await Hive.openBox('cookieBox');
+        // final cookie = box.get('ZENIFY_SESSION_ID');
+        return {
+          if ("s" != null)
+            'Cookie':
+                'ZENIFY_SESSION_ID=s%3A4xfVBICqx69zF6GgnSCpzgDpX4GTEOm1.YkA6YqEcDgkLt41f1W1QJkLelMrT7fZQHUlQPBA9mcA; Path=/; HttpOnly;',
+        };
+      },
+      providerContainer: ProviderScope.containerOf(context),
+    );
+
+    // Add message listener using the new method
+    socketManager.addMessageListener((m.ChatMessage message) {
+      print('New message received: ${message.content}');
+      // Handle the message as needed
+      // The message is automatically added to Riverpod state
+    });
+
+    // Add connection state listener
+    socketManager.addConnectionListener((state) {
+      if (state.isConnected) {
+        _isSocketReconnecting = state.isConnected;
+        colorconnction = Colors.teal;
+        // ScaffoldMessenger.of(
+        //   context,
+        // ).showSnackBar(SnackBar(content: Text('Connected to server')));
+      } else if (state.error != null) {
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(content: Text('Connection error: ${state.error}')),
+        // );
+        colorconnction = Colors.red;
+
+        _isSocketReconnecting = state.isReconnecting;
+      }
+else if (state.isReconnecting) {
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(content: Text('Connection error: ${state.error}')),
+        // );
+        colorconnction = Colors.blue;
+
+        _isSocketReconnecting = state.isReconnecting;
+      }
+    });
+
+    // Initialize socket connection
+    await socketManager.initialize();
   }
 
   Future<void> _initializeLocationProvider(String url) async {
@@ -100,7 +168,7 @@ class _HomePageState extends ConsumerState<HomePage>
   void _onConnectionChanged(bool isConnected) {
     if (mounted) {
       setState(() {
-        _isSocketReconnecting = isConnected;
+        //_isSocketReconnecting = isConnected;
       });
     }
   }
@@ -109,6 +177,7 @@ class _HomePageState extends ConsumerState<HomePage>
   void dispose() {
     _animationController.dispose();
     _locationProvider?.dispose();
+
     super.dispose();
   }
 
@@ -196,7 +265,7 @@ class _HomePageState extends ConsumerState<HomePage>
                   children: _getPages(),
                 ),
               ),
-              if (_isSocketReconnecting)
+          
                 Positioned(
                   top: 50,
                   left: 30,
@@ -204,11 +273,11 @@ class _HomePageState extends ConsumerState<HomePage>
                     width: 16,
                     height: 16,
                     decoration: BoxDecoration(
-                      color: Colors.green,
+                      color: colorconnction,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.green.withOpacity(0.5),
+                          color: colorconnction.withOpacity(0.5),
                           blurRadius: 8,
                           spreadRadius: 2,
                         ),
@@ -216,32 +285,32 @@ class _HomePageState extends ConsumerState<HomePage>
                     ),
                   ),
                 ),
-              if (!_isSocketReconnecting)
-                Positioned(
-                  top: 40,
-                  left: 20,
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 240, 75, 15),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color.fromARGB(
-                            255,
-                            125,
-                            3,
-                            3,
-                          ).withOpacity(0.5),
-                          blurRadius: 8,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
+            //   if (!_isSocketReconnecting)
+            //     Positioned(
+            //       top: 40,
+            //       left: 20,
+            //       child: Container(
+            //         width: 16,
+            //         height: 16,
+            //         decoration: BoxDecoration(
+            //           color: const Color.fromARGB(255, 240, 75, 15),
+            //           shape: BoxShape.circle,
+            //           boxShadow: [
+            //             BoxShadow(
+            //               color: const Color.fromARGB(
+            //                 255,
+            //                 125,
+            //                 3,
+            //                 3,
+            //               ).withOpacity(0.5),
+            //               blurRadius: 8,
+            //               spreadRadius: 2,
+            //             ),
+            //           ],
+            //         ),
+            //       ),
+            //     ),
+           ],
           ),
           bottomNavigationBar: Container(
             decoration: BoxDecoration(

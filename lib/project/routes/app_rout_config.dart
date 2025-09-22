@@ -21,7 +21,6 @@ import 'package:zenifytrip_guide/project/routes/app_rout_const.dart';
 import 'package:zenify_auth/zenify_auth.dart';
 import 'package:zenify_auth/zenify_auth.dart' as zenifyAuth;
 
-
 class AppRoutConfig {
   /// Returns a GoRouter configured with auth state from Riverpod
   static GoRouter returnRouter(WidgetRef ref) {
@@ -196,8 +195,7 @@ class AppRoutConfig {
                   (BuildContext context, GoRouterState state) => ChatScreen(
                     conversationId: 'c153a884-ebb1-41eb-99cb-2b465491430b',
                     conversationName: 'Team Chat',
-currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
-
+                    currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
                   ),
             ),
             GoRoute(

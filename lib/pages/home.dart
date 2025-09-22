@@ -195,7 +195,7 @@ class _HomePageState extends ConsumerState<HomePage>
       return [
         const DiscoveryPage(),
         ConversationsScreen(
-          initialConversationId: "c153a884-ebb1-41eb-99cb-2b465491430b",cureentuserId: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
+          initialConversationId: "c153a884-ebb1-41eb-99cb-2b465491430b",currentUserId: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
         ),
         // TaskListPage(),
         const MapLoadingIndicator(), // Placeholder for map
@@ -211,7 +211,7 @@ class _HomePageState extends ConsumerState<HomePage>
     return [
       const DiscoveryPage(),
       ConversationsScreen(
-        initialConversationId: "c153a884-ebb1-41eb-99cb-2b465491430b",cureentuserId: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
+        initialConversationId: "c153a884-ebb1-41eb-99cb-2b465491430b",currentUserId: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
       ),
       //TaskListPage(),
       p.ChangeNotifierProvider.value(

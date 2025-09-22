@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -19,8 +21,17 @@ import 'package:zenify_auth/zenify_auth.dart' as zenifyAuth;
 import 'package:firebase_ai/firebase_ai.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
+
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  // FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  // Timer(Duration(seconds: 10), () {
+  //   FlutterNativeSplash.remove();
+  //   // This block of code will be executed when the timer finishes.
+  //   print('Timer has finished counting down.');
+  // });
+
   await Hive.initFlutter();
   await Hive.openBox('authBox');
   usePathUrlStrategy(); // ✅ No hash in URLs
@@ -28,8 +39,7 @@ void main() async {
   Hive.registerAdapter(TaskAdapter());
   AppEnvironment.setupEnv(Environment.tunisie);
   WidgetsFlutterBinding.ensureInitialized();
-await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   //   if (Firebase.apps.isEmpty) {
   //     await Firebase.initializeApp(
@@ -50,6 +60,7 @@ await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   // Initialize TaskService
   final taskService = TaskService();
   await taskService.init();
+
   runApp(
     ProviderScope(
       // Riverpod root
@@ -58,7 +69,7 @@ await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
         providers: [
           pro.ChangeNotifierProvider(
             create: (context) => LocationProvider(),
-            child: HomePage(),
+            child: MyApp(),
           ),
         ],
         child: MyApp(),

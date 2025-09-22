@@ -55,6 +55,7 @@ dependencies:
   cached_network_image: ^3.3.0
   firebase_core: ^4.1.0
   firebase_ai: ^3.2.0
+  flutter_native_splash: ^2.4.6
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -90,6 +91,8 @@ flutter:
     - assets/pin.png
     - assets/pin1.png
     - assets/location.png
+    - assets/_description_in_202509210044.gif
+    - assets/flutter.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -93,10 +93,11 @@ class _HomePageState extends ConsumerState<HomePage>
     socketManager = SocketIOManager.instance;
 
     final config = SocketConfig(
+      currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
       url: 'https://api.staging.zenifytrip.com',
       enableLogging: true,
       token:
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInN1YiI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInVzZXJuYW1lIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsImVtYWlsIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbmlzdHJhdG9yIiwiZmlyc3ROYW1lIjoiT3Vzc2FtYSIsInBob25lIjoiMjA2NDA3ODMiLCJsYXN0TmFtZSI6Ik1ldGhuYW5pIiwiZXhwaXJlcyI6MTc1ODg5MjQxNywiY3JlYXRlZCI6MTc1ODI4NzYxNywiaWF0IjoxNzU4Mjg3NjE3LCJleHAiOjE3NTg4OTI0MTd9.iySsbRuzF8VPBWWnF7JubVENdQXYgrQj7vxWk4ZIBMA",
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInN1YiI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInVzZXJuYW1lIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsImVtYWlsIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbmlzdHJhdG9yIiwiZmlyc3ROYW1lIjoiT3Vzc2FtYSIsInBob25lIjoiMjA2NDA3ODMiLCJsYXN0TmFtZSI6Ik1ldGhuYW5pIiwiZXhwaXJlcyI6MTc1OTE0MDEyMCwiY3JlYXRlZCI6MTc1ODUzNTMyMCwiaWF0IjoxNzU4NTM1MzIwLCJleHAiOjE3NTkxNDAxMjB9.VaIx_YIJjpbiHbJc78hdu_HA80MwEGzM7zKPI39xPI0",
     );
 
     socketManager.configure(
@@ -107,7 +108,7 @@ class _HomePageState extends ConsumerState<HomePage>
         return {
           if ("s" != null)
             'Cookie':
-                'ZENIFY_SESSION_ID=s%3A4xfVBICqx69zF6GgnSCpzgDpX4GTEOm1.YkA6YqEcDgkLt41f1W1QJkLelMrT7fZQHUlQPBA9mcA; Path=/; HttpOnly;',
+                'ZENIFY_SESSION_ID=s%3AucbxHoE5RVvsyURiUaj40cI1Rq5Ii5Cp.jhoFxlQczl55OvAPa%2B8gEFgj4WIyrGuhdbLc30bMiUw; Path=/; HttpOnly; Expires=Wed, 22 Oct 2025 10:02:00 GMT;',
         };
       },
       providerContainer: ProviderScope.containerOf(context),
@@ -135,8 +136,7 @@ class _HomePageState extends ConsumerState<HomePage>
         colorconnction = Colors.red;
 
         _isSocketReconnecting = state.isReconnecting;
-      }
-else if (state.isReconnecting) {
+      } else if (state.isReconnecting) {
         // ScaffoldMessenger.of(context).showSnackBar(
         //   SnackBar(content: Text('Connection error: ${state.error}')),
         // );
@@ -194,11 +194,15 @@ else if (state.isReconnecting) {
     if (!_locationInitialized || _locationProvider == null) {
       return [
         const DiscoveryPage(),
-        TaskListPage(),
+        ConversationsScreen(
+          initialConversationId: "c153a884-ebb1-41eb-99cb-2b465491430b",cureentuserId: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
+        ),
+        // TaskListPage(),
         const MapLoadingIndicator(), // Placeholder for map
         const ChatScreen(
           conversationId: 'c153a884-ebb1-41eb-99cb-2b465491430b',
           conversationName: 'Team Chat',
+          currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
         ),
         ProfilePage(),
       ];
@@ -206,7 +210,10 @@ else if (state.isReconnecting) {
 
     return [
       const DiscoveryPage(),
-      TaskListPage(),
+      ConversationsScreen(
+        initialConversationId: "c153a884-ebb1-41eb-99cb-2b465491430b",cureentuserId: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
+      ),
+      //TaskListPage(),
       p.ChangeNotifierProvider.value(
         value: _locationProvider!,
         child: const MapScreenContent(),
@@ -214,6 +221,7 @@ else if (state.isReconnecting) {
       //  MapScreenContent(),
       const ChatScreen(
         conversationId: 'c153a884-ebb1-41eb-99cb-2b465491430b',
+        currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
         conversationName: 'Team Chat',
       ),
 
@@ -265,52 +273,52 @@ else if (state.isReconnecting) {
                   children: _getPages(),
                 ),
               ),
-          
-                Positioned(
-                  top: 50,
-                  left: 30,
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: colorconnction,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorconnction.withOpacity(0.5),
-                          blurRadius: 8,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
+
+              Positioned(
+                top: 50,
+                left: 30,
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: colorconnction,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: colorconnction.withOpacity(0.5),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                    ],
                   ),
                 ),
-            //   if (!_isSocketReconnecting)
-            //     Positioned(
-            //       top: 40,
-            //       left: 20,
-            //       child: Container(
-            //         width: 16,
-            //         height: 16,
-            //         decoration: BoxDecoration(
-            //           color: const Color.fromARGB(255, 240, 75, 15),
-            //           shape: BoxShape.circle,
-            //           boxShadow: [
-            //             BoxShadow(
-            //               color: const Color.fromARGB(
-            //                 255,
-            //                 125,
-            //                 3,
-            //                 3,
-            //               ).withOpacity(0.5),
-            //               blurRadius: 8,
-            //               spreadRadius: 2,
-            //             ),
-            //           ],
-            //         ),
-            //       ),
-            //     ),
-           ],
+              ),
+              //   if (!_isSocketReconnecting)
+              //     Positioned(
+              //       top: 40,
+              //       left: 20,
+              //       child: Container(
+              //         width: 16,
+              //         height: 16,
+              //         decoration: BoxDecoration(
+              //           color: const Color.fromARGB(255, 240, 75, 15),
+              //           shape: BoxShape.circle,
+              //           boxShadow: [
+              //             BoxShadow(
+              //               color: const Color.fromARGB(
+              //                 255,
+              //                 125,
+              //                 3,
+              //                 3,
+              //               ).withOpacity(0.5),
+              //               blurRadius: 8,
+              //               spreadRadius: 2,
+              //             ),
+              //           ],
+              //         ),
+              //       ),
+              //     ),
+            ],
           ),
           bottomNavigationBar: Container(
             decoration: BoxDecoration(

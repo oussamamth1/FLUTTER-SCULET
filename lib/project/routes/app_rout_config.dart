@@ -28,9 +28,9 @@ class AppRoutConfig {
     // Watch the auth state notifier
 
     final authNotifier = ref.watch(authProvider.notifier);
-    zenifyAuth.SocketIOManager.instance.initialize(
-      url: "https://api.staging.zenifytrip.com",
-    );
+    // zenifyAuth.SocketIOManager.instance.initialize(
+    //   url: "https://api.staging.zenifytrip.com",
+    // );
     return GoRouter(
       routes: <RouteBase>[
         GoRoute(
@@ -196,6 +196,8 @@ class AppRoutConfig {
                   (BuildContext context, GoRouterState state) => ChatScreen(
                     conversationId: 'c153a884-ebb1-41eb-99cb-2b465491430b',
                     conversationName: 'Team Chat',
+currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
+
                   ),
             ),
             GoRoute(

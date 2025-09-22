@@ -30,6 +30,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+<meta-data
+ android:name="io.flutter.embedding.android.SplashScreenDrawable"
+ android:resource="@drawable/launch_background"
+ />
             <meta-data android:name="com.google.android.geo.API_KEY"
                android:value="AIzaSyBiE7onmrq11reD-hX0aNi4ouxNKzue_WQ"/>  <!-- YOUR-API-KEY -->
     </application>

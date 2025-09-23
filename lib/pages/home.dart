@@ -53,7 +53,14 @@ class _HomePageState extends ConsumerState<HomePage>
       //   socketManager = SocketIOManager.instance;
 
       _initializeSocket();
-      // final config = SocketConfig(
+    socketManager.addMessageListener((m.ChatMessage message) {
+      print('New message received: ${message.content}');
+      // Handle the message as needed
+      // The message is automatically added to Riverpod state
+    });
+
+    // Add connection state listener
+     // final config = SocketConfig(
       //   url: 'https://api.staging.zenifytrip.com',
       //   enableLogging: true,
       //   token:
@@ -115,36 +122,7 @@ class _HomePageState extends ConsumerState<HomePage>
     );
 
     // Add message listener using the new method
-    socketManager.addMessageListener((m.ChatMessage message) {
-      print('New message received: ${message.content}');
-      // Handle the message as needed
-      // The message is automatically added to Riverpod state
-    });
 
-    // Add connection state listener
-    socketManager.addConnectionListener((state) {
-      if (state.isConnected) {
-        _isSocketReconnecting = state.isConnected;
-        colorconnction = Colors.teal;
-        // ScaffoldMessenger.of(
-        //   context,
-        // ).showSnackBar(SnackBar(content: Text('Connected to server')));
-      } else if (state.error != null) {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(content: Text('Connection error: ${state.error}')),
-        // );
-        colorconnction = Colors.red;
-
-        _isSocketReconnecting = state.isReconnecting;
-      } else if (state.isReconnecting) {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(content: Text('Connection error: ${state.error}')),
-        // );
-        colorconnction = Colors.blue;
-
-        _isSocketReconnecting = state.isReconnecting;
-      }
-    });
 
     // Initialize socket connection
     await socketManager.initialize();
@@ -168,7 +146,7 @@ class _HomePageState extends ConsumerState<HomePage>
   void _onConnectionChanged(bool isConnected) {
     if (mounted) {
       setState(() {
-        //_isSocketReconnecting = isConnected;
+        _isSocketReconnecting = isConnected;
       });
     }
   }
@@ -235,9 +213,33 @@ class _HomePageState extends ConsumerState<HomePage>
 
     // Listen for socket changes
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      zenifyAuth.SocketIOManager.instance.addConnectionChangeListener(
-        _onConnectionChanged,
-      );
+      socketManager.addConnectionListener((state) {
+        if (state.isConnected) {
+          _isSocketReconnecting = state.isConnected;
+          colorconnction = Colors.teal;
+          // ScaffoldMessenger.of(
+          //   context,
+          // ).showSnackBar(SnackBar(content: Text('Connected to server')));
+        } else if (state.error != null) {
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   SnackBar(content: Text('Connection error: ${state.error}')),
+          // );
+          colorconnction = Colors.red;
+
+          _isSocketReconnecting = state.isReconnecting;
+        } else if (state.isReconnecting) {
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   SnackBar(content: Text('Connection error: ${state.error}')),
+          // );
+          colorconnction = Colors.blue;
+
+          _isSocketReconnecting = state.isReconnecting;
+        }
+      });
+ 
+      // zenifyAuth.SocketIOManager.instance.addConnectionChangeListener(
+      //   _onConnectionChanged,
+      // );
 
       // Initialize location provider only once when authenticated
       if (authState.status == AuthStatus.authenticated &&
@@ -275,8 +277,8 @@ class _HomePageState extends ConsumerState<HomePage>
               ),
 
               Positioned(
-                top: 50,
-                left: 30,
+                top: 80,
+                right: 35,
                 child: Container(
                   width: 16,
                   height: 16,

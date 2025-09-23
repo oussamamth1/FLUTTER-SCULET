@@ -230,7 +230,7 @@ class AppRoutConfig {
         if (isLoading) return null;
         if (!isLoggedIn && !isAuthPage) return '/login';
         if (isLoggedIn && isAuthPage) return '/';
-        return null;
+        return  '/';
       },
       // Refresh GoRouter when auth state changes
       refreshListenable: GoRouterRefreshStream(authNotifier.stream),

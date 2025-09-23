@@ -85,14 +85,14 @@ class MyApp extends ConsumerWidget {
   // This widget is the root of your application.
 
   Widget build(BuildContext context, WidgetRef ref) {
-    final _router = AppRoutConfig.returnRouter(ref);
+    final router = AppRoutConfig.returnRouter(ref);
     return MaterialApp.router(
       theme: AppEnvironment.lightTheme,
       title: 'ZenifyTrip Guide',
 
       debugShowCheckedModeBanner: false,
       restorationScopeId: null, // Disable restoration to avoid the error
-      routerConfig: _router, // 👈 This is enough! Remove parser/delegate
+      routerConfig: router, // 👈 This is enough! Remove parser/delegate
     );
   }
 }

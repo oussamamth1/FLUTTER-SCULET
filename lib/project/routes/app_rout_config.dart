@@ -27,6 +27,9 @@ class AppRoutConfig {
     // Watch the auth state notifier
 
     final authNotifier = ref.watch(authProvider.notifier);
+    // final token = ZenifyAuth.getSavedToken();
+    // final user = ZenifyAuth.getSavedUser();
+    // final cookies = ZenifyAuth.getSavedCookies();
     // zenifyAuth.SocketIOManager.instance.initialize(
     //   url: "https://api.staging.zenifytrip.com",
     // );
@@ -218,7 +221,7 @@ class AppRoutConfig {
       },
       redirect: (context, state) {
         final authState = ref.read(authProvider);
-        final isLoggedIn = authState.status == AuthStatus.authenticated;
+        final isLoggedIn = (authState.status) == AuthStatus.authenticated;
         final isLoading = authState.status == AuthStatus.loading;
         final currentPath = state.matchedLocation;
 
@@ -230,7 +233,7 @@ class AppRoutConfig {
         if (isLoading) return null;
         if (!isLoggedIn && !isAuthPage) return '/login';
         if (isLoggedIn && isAuthPage) return '/';
-        return  '/';
+        return null;
       },
       // Refresh GoRouter when auth state changes
       refreshListenable: GoRouterRefreshStream(authNotifier.stream),

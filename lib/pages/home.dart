@@ -53,14 +53,14 @@ class _HomePageState extends ConsumerState<HomePage>
       //   socketManager = SocketIOManager.instance;
 
       _initializeSocket();
-    socketManager.addMessageListener((m.ChatMessage message) {
-      print('New message received: ${message.content}');
-      // Handle the message as needed
-      // The message is automatically added to Riverpod state
-    });
+      socketManager.addMessageListener((m.ChatMessage message) {
+        print('New message received: ${message.content}');
+        // Handle the message as needed
+        // The message is automatically added to Riverpod state
+      });
 
-    // Add connection state listener
-     // final config = SocketConfig(
+      // Add connection state listener
+      // final config = SocketConfig(
       //   url: 'https://api.staging.zenifytrip.com',
       //   enableLogging: true,
       //   token:
@@ -96,6 +96,10 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 
   void _initializeSocket() async {
+    final token = ZenifyAuth.getSavedToken();
+    final user = ZenifyAuth.getSavedUser();
+    final cookies = ZenifyAuth.getSavedCookies();
+    print('hiiiiii $token $cookies');
     // Configure socket
     socketManager = SocketIOManager.instance;
 
@@ -103,26 +107,18 @@ class _HomePageState extends ConsumerState<HomePage>
       currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
       url: 'https://api.staging.zenifytrip.com',
       enableLogging: true,
-      token:
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInN1YiI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInVzZXJuYW1lIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsImVtYWlsIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbmlzdHJhdG9yIiwiZmlyc3ROYW1lIjoiT3Vzc2FtYSIsInBob25lIjoiMjA2NDA3ODMiLCJsYXN0TmFtZSI6Ik1ldGhuYW5pIiwiZXhwaXJlcyI6MTc1OTE0MDEyMCwiY3JlYXRlZCI6MTc1ODUzNTMyMCwiaWF0IjoxNzU4NTM1MzIwLCJleHAiOjE3NTkxNDAxMjB9.VaIx_YIJjpbiHbJc78hdu_HA80MwEGzM7zKPI39xPI0",
+      token: "$token",
     );
 
     socketManager.configure(
       config,
       headersProvider: () async {
-        // final box = await Hive.openBox('cookieBox');
-        // final cookie = box.get('ZENIFY_SESSION_ID');
-        return {
-          if ("s" != null)
-            'Cookie':
-                'ZENIFY_SESSION_ID=s%3AucbxHoE5RVvsyURiUaj40cI1Rq5Ii5Cp.jhoFxlQczl55OvAPa%2B8gEFgj4WIyrGuhdbLc30bMiUw; Path=/; HttpOnly; Expires=Wed, 22 Oct 2025 10:02:00 GMT;',
-        };
+        return {if (cookies != null) 'Cookie': cookies};
       },
       providerContainer: ProviderScope.containerOf(context),
     );
 
     // Add message listener using the new method
-
 
     // Initialize socket connection
     await socketManager.initialize();
@@ -173,7 +169,8 @@ class _HomePageState extends ConsumerState<HomePage>
       return [
         const DiscoveryPage(),
         ConversationsScreen(
-          initialConversationId: "c153a884-ebb1-41eb-99cb-2b465491430b",currentUserId: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
+          initialConversationId: "c153a884-ebb1-41eb-99cb-2b465491430b",
+          currentUserId: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
         ),
         // TaskListPage(),
         const MapLoadingIndicator(), // Placeholder for map
@@ -189,7 +186,8 @@ class _HomePageState extends ConsumerState<HomePage>
     return [
       const DiscoveryPage(),
       ConversationsScreen(
-        initialConversationId: "c153a884-ebb1-41eb-99cb-2b465491430b",currentUserId: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
+        initialConversationId: "c153a884-ebb1-41eb-99cb-2b465491430b",
+        currentUserId: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
       ),
       //TaskListPage(),
       p.ChangeNotifierProvider.value(
@@ -236,7 +234,7 @@ class _HomePageState extends ConsumerState<HomePage>
           _isSocketReconnecting = state.isReconnecting;
         }
       });
- 
+
       // zenifyAuth.SocketIOManager.instance.addConnectionChangeListener(
       //   _onConnectionChanged,
       // );

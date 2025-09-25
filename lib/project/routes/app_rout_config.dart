@@ -56,6 +56,13 @@ class AppRoutConfig {
                       DiscoveryPage(),
             ),
             GoRoute(
+              name: "code",
+              path: '/code',
+              builder:
+                  (BuildContext context, GoRouterState state) =>
+                      AuthFlowScreen(),
+            ),
+            GoRoute(
               name: AppRouteConst.loginwithcode,
               path: '/loginwithcode',
               builder:
@@ -116,7 +123,7 @@ class AppRoutConfig {
               builder:
                   (BuildContext context, GoRouterState state) => LoginScreen(
                     minPasswordLength: 5,
-                    showLoginwithCode: false,
+                    showLoginwithCode: true,
                     onLoginwithCode: () {
                       // Handle login with code action
                       // For example, navigate to a code input screen
@@ -125,7 +132,7 @@ class AppRoutConfig {
                       //     builder: (context) => CodeLoginScreen(),
                       //   ),
                       // );
-                      context.go('/loginwithcode');
+                      context.go('/code');
                     },
                     loginWithCodeText:
                         'Login with Code', // Optional: customize text
@@ -228,7 +235,7 @@ class AppRoutConfig {
         final isAuthPage =
             currentPath == '/login' ||
             currentPath == '/register' ||
-            currentPath == '/loginwithcode';
+            currentPath == '/code';
 
         if (isLoading) return null;
         if (!isLoggedIn && !isAuthPage) return '/login';
@@ -343,11 +350,14 @@ class AppRoutConfig {
               child: const Text('Send Reset Code'),
               onPressed: () async {
                 if (formKey.currentState!.validate()) {
-                  Navigator.of(context).pop(); // Close the email dialog
-                  await sendPasswordResetEmailRequest(
-                    emailController.text,
-                    context,
-                  );
+                  // Store the email before closing dialog
+                  final email = emailController.text;
+
+                  // Close the email dialog
+                  //   Navigator.of(context).pop();
+
+                  // Use the parent context for the password reset request
+                  await sendPasswordResetEmailRequest(email, context);
                 }
               },
             ),
@@ -368,6 +378,9 @@ class AppRoutConfig {
         body: jsonEncode(<String, dynamic>{'email': email}),
       );
 
+      // Check if the widget is still mounted before using context
+      if (!context.mounted) return;
+
       if (response.statusCode == 201 || response.statusCode == 200) {
         await showResetDialogEmail(context, email);
         print('Password reset request sent successfully');
@@ -382,12 +395,16 @@ class AppRoutConfig {
       }
     } catch (e) {
       print('Error sending password reset request: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Network error. Please check your connection.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+
+      // Check if context is still valid before showing snackbar
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Network error. Please check your connection.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -406,7 +423,7 @@ class AppRoutConfig {
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
@@ -513,7 +530,7 @@ class AppRoutConfig {
                 TextButton(
                   child: const Text('Cancel'),
                   onPressed: () {
-                    Navigator.of(context).pop();
+                    Navigator.of(dialogContext).pop();
                   },
                 ),
                 ElevatedButton(
@@ -537,7 +554,11 @@ class AppRoutConfig {
                           }),
                         );
 
-                        Navigator.of(context).pop(); // Close the dialog
+                        // Close the dialog first
+                        Navigator.of(dialogContext).pop();
+
+                        // Check if the original context is still mounted before showing snackbar
+                        if (!context.mounted) return;
 
                         if (resetResponse.statusCode == 201 ||
                             resetResponse.statusCode == 200) {
@@ -555,6 +576,7 @@ class AppRoutConfig {
                               backgroundColor: Colors.green,
                             ),
                           );
+                          // Navigate back to previous screen (likely login)
                           Navigator.of(context).pop();
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -571,13 +593,18 @@ class AppRoutConfig {
                           );
                         }
                       } catch (e) {
-                        Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Network error. Please try again.'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
+                        // Close dialog first
+                        Navigator.of(dialogContext).pop();
+
+                        // Check if context is still valid
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Network error. Please try again.'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       }
                     }
                   },
@@ -589,4 +616,6 @@ class AppRoutConfig {
       },
     );
   }
+
+  // Updated button press handler for the email dialog
 }

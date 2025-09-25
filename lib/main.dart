@@ -51,16 +51,16 @@ void main() async {
   //     Firebase.app(); // Get the default app
   //   }
 
-  zenifyAuth.ZenifyAuth.initialize(
-    baseUrl: "https://api.staging.zenifytrip.com", // project-specific URL
-    fromJson: (json) => zenifyAuth.User.fromJson(json),
-  );
+ 
 
   //  await SocketIOManager.instance.initSocket();
   // Initialize TaskService
   final taskService = TaskService();
   await taskService.init();
-
+  await  zenifyAuth.ZenifyAuth.initialize(
+    baseUrl: "https://api.staging.zenifytrip.com", // project-specific URL
+    fromJson: (json) => zenifyAuth.User.fromJson(json),
+  );
   runApp(
     ProviderScope(
       // Riverpod root
@@ -81,6 +81,7 @@ void main() async {
 
 class MyApp extends ConsumerWidget {
   MyApp({super.key});
+
 
   // This widget is the root of your application.
 

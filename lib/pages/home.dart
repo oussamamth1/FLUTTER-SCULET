@@ -96,32 +96,37 @@ class _HomePageState extends ConsumerState<HomePage>
   }
 
   void _initializeSocket() async {
-    final token = ZenifyAuth.getSavedToken();
+    var userelement = await ref.read(zenifyAuth.authProvider);
+    final token =userelement?.token?? ZenifyAuth.getSavedToken();
     final user = ZenifyAuth.getSavedUser();
-    final cookies = ZenifyAuth.getSavedCookies();
+    final cookies = userelement?.cookie ?? ZenifyAuth.getSavedCookies();
+
     print('hiiiiii $token $cookies');
     // Configure socket
-    socketManager = SocketIOManager.instance;
 
-    final config = SocketConfig(
-      currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
-      url: 'https://api.staging.zenifytrip.com',
-      enableLogging: true,
-      token: "$token",
-    );
+      socketManager = SocketIOManager.instance;
 
-    socketManager.configure(
-      config,
-      headersProvider: () async {
-        return {if (cookies != null) 'Cookie': cookies};
-      },
-      providerContainer: ProviderScope.containerOf(context),
-    );
+      final config = SocketConfig(
+        currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
+        url: 'https://api.staging.zenifytrip.com',
+        enableLogging: true,
+        token: "$token",
+      );
 
-    // Add message listener using the new method
+      socketManager.configure(
+        config,
+        headersProvider: () async {
+          return {if (cookies != null) 'Cookie': cookies};
+        },
+        providerContainer: ProviderScope.containerOf(context),
+      );
 
-    // Initialize socket connection
-    await socketManager.initialize();
+      // Add message listener using the new method
+
+      // Initialize socket connection
+      await socketManager.initialize();
+    
+   
   }
 
   Future<void> _initializeLocationProvider(String url) async {
@@ -179,6 +184,7 @@ class _HomePageState extends ConsumerState<HomePage>
           conversationName: 'Team Chat',
           currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
         ),
+//zenifyAuth.AuthFlowScreen(),
         ProfilePage(),
       ];
     }
@@ -200,8 +206,8 @@ class _HomePageState extends ConsumerState<HomePage>
         currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
         conversationName: 'Team Chat',
       ),
-
-      ProfilePage(),
+ProfilePage(),
+      //zenifyAuth.AuthFlowScreen(),
     ];
   }
 

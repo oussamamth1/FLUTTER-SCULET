@@ -7,7 +7,7 @@ import 'package:socket_io_riverpod/socket_io_riverpod.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:zenifytrip_guide/GoRouterRefreshStream.dart';
-import 'package:socket_io_riverpod/socket_io_riverpod.dart';
+import 'package:socket_io_riverpod/socket_io_riverpod.dart' as s;
 
 import 'package:zenifytrip_guide/env.dart';
 import 'package:zenifytrip_guide/pages/CodeLoginScreen.dart';
@@ -27,6 +27,7 @@ class AppRoutConfig {
     // Watch the auth state notifier
 
     final authNotifier = ref.watch(authProvider.notifier);
+
     // final token = ZenifyAuth.getSavedToken();
     // final user = ZenifyAuth.getSavedUser();
     // final cookies = ZenifyAuth.getSavedCookies();
@@ -38,7 +39,10 @@ class AppRoutConfig {
         GoRoute(
           path: '/',
           name: AppRouteConst.home,
-          builder: (BuildContext context, GoRouterState state) => HomePage(),
+          builder: (BuildContext context, GoRouterState state) {
+            //ProviderScope.containerOf(context);
+            return HomePage();
+          },
           routes: <RouteBase>[
             GoRoute(
               name: AppRouteConst.details,
@@ -198,16 +202,16 @@ class AppRoutConfig {
                     // overlayColor: Colors.black.withOpacity(0.3),
                   ),
             ),
-            GoRoute(
-              name: AppRouteConst.messages,
-              path: 'messages',
-              builder:
-                  (BuildContext context, GoRouterState state) => ChatScreen(
-                    conversationId: 'c153a884-ebb1-41eb-99cb-2b465491430b',
-                    conversationName: 'Team Chat',
-                    currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
-                  ),
-            ),
+            // GoRoute(
+            //   name: AppRouteConst.messages,
+            //   path: 'messages',
+            //   builder:
+            //       (BuildContext context, GoRouterState state) => ChatScreen(
+            //         conversationId: 'c153a884-ebb1-41eb-99cb-2b465491430b',
+            //         conversationName: 'Team Chat',
+            //         currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
+            //       ),
+            // ),
             GoRoute(
               name: AppRouteConst.profile,
               path: 'profile',
@@ -231,7 +235,10 @@ class AppRoutConfig {
         final isLoggedIn = (authState.status) == AuthStatus.authenticated;
         final isLoading = authState.status == AuthStatus.loading;
         final currentPath = state.matchedLocation;
-
+        // WidgetsBinding.instance.addPostFrameCallback((_) {
+        //   s.SocketIOManager.instance.initialize();
+        //   // socketManager.refreshSocket();
+        // });
         final isAuthPage =
             currentPath == '/login' ||
             currentPath == '/register' ||

@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:zenify_auth/zenify_auth.dart' as zenifyAuth;
 
-class DiscoveryPage extends StatelessWidget {
+
+
+class DiscoveryPage extends ConsumerWidget {
   const DiscoveryPage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+
+    var userelement = ref.read(zenifyAuth.authProvider);
+    final token = userelement?.user?.token;
+  //final user = ZenifyAuth.getSavedUser();
+    final cookies = userelement?.user?.cookie;
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -68,9 +77,9 @@ class DiscoveryPage extends StatelessWidget {
                     bottom: 30,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children:  [
                         Text(
-                          'Discover Amazing',
+                          'Discover Amazing$cookies',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 24,
@@ -78,7 +87,7 @@ class DiscoveryPage extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Places & Experiences',
+                          'Places & Experiences $token',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,

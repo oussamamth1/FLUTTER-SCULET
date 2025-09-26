@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:zenify_auth/zenify_auth.dart' as zenifyAuth;
 import 'package:go_router/go_router.dart';
-import 'package:zenifytrip_guide/features/ChatModulev2/SocketManagment.dart';
+import 'package:zenifytrip_guide/features/ChatModulev2/SocketManagment.dart'
+    hide SocketIOManager;
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:socket_io_riverpod/socket_io_riverpod.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -21,23 +23,69 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late zenifyAuth.AuthState<zenifyAuth.User> user;
+  late SocketIOManager socketManager;
+
   @override
   void initState() {
     super.initState();
-    
+ //   _initializeSocket();
     ref.read(zenifyAuth.authProvider.notifier).fetchUserProfile();
 
-user = ref.read(zenifyAuth.authProvider);
+    user = ref.read(zenifyAuth.authProvider);
     final firstName = user.user?.firstName ?? "traveler";
     final lastname = user.user?.username ?? "an unknown place";
     model = FirebaseAI.googleAI().generativeModel(
       model: 'gemini-2.0-flash',
       systemInstruction: Content.text(
-        "You are chatting with user $firstName  $lastname "
+        "You are chatting with user $firstName  $lastname ",
         // "Answer in a friendly and helpful way.",
       ),
     );
     _initializeChat();
+  }
+
+  void _initializeSocket() async {
+    // Clear cached user data before fetching fresh profile
+    //await zenifyAuth.ZenifyAuth.clearUserData();
+
+    // Fetch fresh user profile
+    // await ref.read(zenifyAuth.authProvider.notifier).fetchUserProfile();
+    var userelement = ref.read(zenifyAuth.authProvider);
+    // var userelement = ref.read(zenifyAuth.authProvider);
+    //var userelements = ref.watch(zenifyAuth.authProvider);
+    final token = userelement?.token;
+    //final user = ZenifyAuth.getSavedUser();
+    final cookies = userelement?.user?.cookie;
+
+    print('userelement $token $cookies');
+    // Configure socket
+
+    socketManager = SocketIOManager.instance;
+
+    final config = SocketConfig(
+      currentUserID: "c46f41f5-91d3-43dd-8fc2-f452405b66a3",
+      url: 'https://api.staging.zenifytrip.com',
+      enableLogging: true,
+      token:
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInN1YiI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInVzZXJuYW1lIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsImVtYWlsIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbmlzdHJhdG9yIiwiZmlyc3ROYW1lIjoiT3Vzc2FtYSIsInBob25lIjoiMjA2NDA3ODMiLCJsYXN0TmFtZSI6Ik1ldGhuYW5pIiwiZXhwaXJlcyI6MTc1OTQ5ODcyNCwiY3JlYXRlZCI6MTc1ODg5MzkyNCwiaWF0IjoxNzU4ODkzOTI0LCJleHAiOjE3NTk0OTg3MjR9.Ysjx9r5QoLrImKw0eKhK_zcATKMYB-2nSIXC4nSFnTI",
+    );
+
+    socketManager.configure(
+      config,
+      headersProvider: () async {
+        return {'Cookie': "$cookies"};
+      },
+      //  providerContainer: ProviderScope.containerOf(context),
+    );
+
+    //   // Add message listener using the new method
+
+    //   // Initialize socket connection
+    await socketManager.initialize();
+    //  await zenifyAuth.ZenifyAuth.initialize(
+    //   baseUrl: "https://api.staging.zenifytrip.com", // project-specific URL
+    //   fromJson: (json) => zenifyAuth.User.fromJson(json),
+    // );
   }
 
   @override
@@ -128,7 +176,7 @@ user = ref.read(zenifyAuth.authProvider);
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-return Scaffold(
+    return Scaffold(
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
@@ -598,7 +646,8 @@ return Scaffold(
           ),
         ),
       ),
-    );  }
+    );
+  }
 
   Widget _buildChatMessage(ChatMessage message) {
     return Container(
@@ -647,7 +696,7 @@ return Scaffold(
             CircleAvatar(
               radius: 16,
               backgroundColor: Colors.grey[300],
-                    child: CachedNetworkImage(
+              child: CachedNetworkImage(
                 imageUrl:
                     "https://api.staging.zenifytrip.com/assets/uploads/traveller/${user.user?.picture}",
                 errorWidget:
@@ -690,7 +739,6 @@ return Scaffold(
                       ),
                     ),
               ),
-                     
             ),
           ],
         ],
@@ -816,8 +864,17 @@ return Scaffold(
 
     if (shouldLogout == true) {
       await ref.read(zenifyAuth.authProvider.notifier).logout();
+      // SocketIOManager.instance.disconnect();
+      // ref.invalidate(messagesProvider);
+      //       ref.invalidate(conversationProvider);
+      //       ref.invalidate(socketConnectionProvider);
+      SocketIOManager.instance.clearAllProviderStates();
+      SocketIOManager.instance.disconnect();
+
+      // Clear auth data
+      //await zenifyAuth.ZenifyAuth.logout();
       if (mounted) {
-        context.go('/login');
+        context.go('/');
       }
     }
   }

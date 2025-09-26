@@ -44,11 +44,12 @@ class _HomePageState extends ConsumerState<HomePage>
   bool _isSocketReconnecting = false;
   Color colorconnction = Colors.transparent;
   // Provide a prompt that contains text
-
+  late AuthState<User> userelement = AuthState();
   @override
   void initState() {
     super.initState();
-    _initializeSocket();
+    // _initializeSocket();
+   // ref.read(zenifyAuth.authProvider.notifier).fetchUserProfile();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       //   socketManager = SocketIOManager.instance;
 
@@ -92,41 +93,46 @@ class _HomePageState extends ConsumerState<HomePage>
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _animationController.forward();
-    ref.read(zenifyAuth.authProvider.notifier).fetchUserProfile();
+   
   }
 
   void _initializeSocket() async {
-    var userelement = await ref.read(zenifyAuth.authProvider);
-    final token =userelement?.token?? ZenifyAuth.getSavedToken();
-    final user = ZenifyAuth.getSavedUser();
-    final cookies = userelement?.cookie ?? ZenifyAuth.getSavedCookies();
 
+   
+    // final  user =
+    //     await  ref.read(zenifyAuth.authProvider.notifier).fetchUserProfile();
+    var userelement = ref.read(zenifyAuth.authProvider);
+    final cookies = userelement?.cookie;
+
+    final token = userelement?.token;
     print('hiiiiii $token $cookies');
     // Configure socket
 
-      socketManager = SocketIOManager.instance;
+    socketManager = SocketIOManager.instance;
 
-      final config = SocketConfig(
-        currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
-        url: 'https://api.staging.zenifytrip.com',
-        enableLogging: true,
-        token: "$token",
-      );
+    final config = SocketConfig(
+      currentUserID: userelement.user?.id ?? "",
+      url: 'https://api.staging.zenifytrip.com',
+      enableLogging: true,
+      token: "$token",
+    );
 
-      socketManager.configure(
-        config,
-        headersProvider: () async {
-          return {if (cookies != null) 'Cookie': cookies};
-        },
-        providerContainer: ProviderScope.containerOf(context),
-      );
+    socketManager.configure(
+      config,
+      headersProvider: () async {
+        return {if (cookies != null) 'Cookie': cookies};
+      },
+      providerContainer: ProviderScope.containerOf(context),
+    );
 
-      // Add message listener using the new method
+    //   // Add message listener using the new method
 
-      // Initialize socket connection
-      await socketManager.initialize();
-    
-   
+    //   // Initialize socket connection
+    await socketManager.initialize();
+    //  await zenifyAuth.ZenifyAuth.initialize(
+    //   baseUrl: "https://api.staging.zenifytrip.com", // project-specific URL
+    //   fromJson: (json) => zenifyAuth.User.fromJson(json),
+    // );
   }
 
   Future<void> _initializeLocationProvider(String url) async {
@@ -175,16 +181,16 @@ class _HomePageState extends ConsumerState<HomePage>
         const DiscoveryPage(),
         ConversationsScreen(
           initialConversationId: "c153a884-ebb1-41eb-99cb-2b465491430b",
-          currentUserId: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
+          currentUserId: userelement.user?.id ?? "",
         ),
         // TaskListPage(),
         const MapLoadingIndicator(), // Placeholder for map
-        const ChatScreen(
+        ChatScreen(
           conversationId: 'c153a884-ebb1-41eb-99cb-2b465491430b',
           conversationName: 'Team Chat',
-          currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
+          currentUserID: userelement.user?.id ?? "",
         ),
-//zenifyAuth.AuthFlowScreen(),
+        //zenifyAuth.AuthFlowScreen(),
         ProfilePage(),
       ];
     }
@@ -193,7 +199,7 @@ class _HomePageState extends ConsumerState<HomePage>
       const DiscoveryPage(),
       ConversationsScreen(
         initialConversationId: "c153a884-ebb1-41eb-99cb-2b465491430b",
-        currentUserId: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
+        currentUserId: userelement.user?.id ?? "",
       ),
       //TaskListPage(),
       p.ChangeNotifierProvider.value(
@@ -201,12 +207,12 @@ class _HomePageState extends ConsumerState<HomePage>
         child: const MapScreenContent(),
       ),
       //  MapScreenContent(),
-      const ChatScreen(
+      ChatScreen(
         conversationId: 'c153a884-ebb1-41eb-99cb-2b465491430b',
-        currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
         conversationName: 'Team Chat',
+        currentUserID: userelement.user?.id ?? "",
       ),
-ProfilePage(),
+      ProfilePage(),
       //zenifyAuth.AuthFlowScreen(),
     ];
   }

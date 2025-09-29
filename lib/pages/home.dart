@@ -11,6 +11,7 @@ import 'package:zenifytrip_guide/provider/location_provider.dart';
 import 'package:zenifytrip_guide/provider/mapLoader.dart';
 import 'package:zenifytrip_guide/provider/mapSecreen..dart';
 import 'package:zenifytrip_guide/screens/explore.dart';
+import 'package:zenifytrip_guide/service_locator.dart';
 import 'package:zenifytrip_guide/theme.dart';
 import '../features/auth/presentation/providers/auth_provider.dart'
     hide authProvider;
@@ -36,6 +37,8 @@ class _HomePageState extends ConsumerState<HomePage>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late SocketIOManager socketManager;
+  final storage = sl<zenifyAuth.AuthStorage>();
+
   LocationProvider? _locationProvider;
   bool _locationInitialized = false;
   final taskService = TaskService();
@@ -48,11 +51,25 @@ class _HomePageState extends ConsumerState<HomePage>
   @override
   void initState() {
     super.initState();
-    _initializeSocket();
+    // _initializeSocket();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+   
+     
+      //  _initializeSocketIfAuthenticated();
+      _initializeSocket();
+      // Listen to auth changes
+      // ref.listen(authProvider, (previous, next) {
+      //   if (next.status == zenifyAuth.AuthStatus.authenticated &&
+      //       previous?.status != zenifyAuth.AuthStatus.authenticated) {
+      //     _initializeSocket();
+      //   } else if (next.status == zenifyAuth.AuthStatus.unauthenticated) {
+      //    _initializeSocket();
+      //   }
+      // });
+
       //   socketManager = SocketIOManager.instance;
 
-      _initializeSocket();
+      // _initializeSocket();
       socketManager.addMessageListener((m.ChatMessage message) {
         print('New message received: ${message.content}');
         // Handle the message as needed
@@ -92,36 +109,44 @@ class _HomePageState extends ConsumerState<HomePage>
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _animationController.forward();
-    ref.read(zenifyAuth.authProvider.notifier).fetchUserProfile();
+    // ref.read(zenifyAuth.authProvider.notifier);
+  }
+
+  void _initializeSocketIfAuthenticated() {
+    final authState = ref.read(authProvider);
+    if (authState.status == zenifyAuth.AuthStatus.authenticated) {
+      _initializeSocket();
+    }
   }
 
   void _initializeSocket() async {
-    final token = ZenifyAuth.getSavedToken();
-    final user = ZenifyAuth.getSavedUser();
-    final cookies = ZenifyAuth.getSavedCookies();
-    print('hiiiiii $token $cookies');
-    // Configure socket
+    // Get storage from service locator
+    final storage = sl<zenifyAuth.AuthStorage>();
+
+    final finalToken = storage.getToken() ?? '';
+    final finalCookie = storage.getCookie() ?? '';
+    final finalUserId = storage.getUserId() ?? '';
     socketManager = SocketIOManager.instance;
 
     final config = SocketConfig(
-      currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
+      currentUserID: finalUserId,
       url: 'https://api.staging.zenifytrip.com',
       enableLogging: true,
-      token: "$token",
+      token: finalToken,
     );
 
     socketManager.configure(
       config,
       headersProvider: () async {
-        return {if (cookies != null) 'Cookie': cookies};
+        // Get fresh cookie from storage in case it was updated
+        final currentCookie = finalCookie;
+        return {'Cookie': currentCookie};
       },
       providerContainer: ProviderScope.containerOf(context),
     );
 
-    // Add message listener using the new method
-
-    // Initialize socket connection
     await socketManager.initialize();
+    print("✅ Socket connected successfully");
   }
 
   Future<void> _initializeLocationProvider(String url) async {
@@ -131,12 +156,12 @@ class _HomePageState extends ConsumerState<HomePage>
     );
 
     await _locationProvider!.initialization(startTracking: false);
-    if (mounted) {
-      await _locationProvider!.loadPositionsFromApi('', context);
-      setState(() {
-        _locationInitialized = true;
-      });
-    }
+    // if (mounted) {
+    //   await _locationProvider!.loadPositionsFromApi('', context);
+    //   setState(() {
+    //     _locationInitialized = true;
+    //   });
+    // }
   }
 
   void _onConnectionChanged(bool isConnected) {
@@ -146,6 +171,55 @@ class _HomePageState extends ConsumerState<HomePage>
       });
     }
   }
+  Future<void> _showLogoutDialog() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Text(
+              'Sign Out',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: const Text(
+              'Are you sure you want to sign out of your account?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('Sign Out'),
+              ),
+            ],
+          ),
+    );
+
+    if (shouldLogout == true) {
+      await storage.clear();
+      socketManager.disconnect();
+
+      await ref.read(zenifyAuth.authProvider.notifier).logout();
+      if (mounted) {
+        context.go('/login');
+      }
+    }
+  }
+
 
   @override
   void dispose() {
@@ -247,133 +321,150 @@ class _HomePageState extends ConsumerState<HomePage>
       }
     });
 
-    switch (authState.status) {
-      case AuthStatus.loading:
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-
-      case AuthStatus.unauthenticated:
-        return const Scaffold(body: Center(child: Text("Please log in")));
-
-      case AuthStatus.authenticated:
-        return Scaffold(
-          // appBar: AppBar(
-          //   title: Text('Socket App'),
-          //   actions: [
-          //     // Show connection status
-          //     SocketStatusWidget(),
-          //   ],
-          // ),
-          backgroundColor: const Color(0xFFF8F9FA),
-          body: Stack(
-            children: [
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: IndexedStack(
-                  index: _selectedIndex,
-                  children: _getPages(),
-                ),
-              ),
-
-              Positioned(
-                top: 80,
-                right: 35,
-                child: Container(
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: colorconnction,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorconnction.withOpacity(0.5),
-                        blurRadius: 8,
-                        spreadRadius: 2,
-                      ),
-                    ],
+    return Scaffold(
+      appBar: AppBar(
+        title: Container(
+          width: 20,
+          height: 20,
+         
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () async {
+                await _showLogoutDialog();
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.logout, color: Colors.red),
+                
+                  Text(
+                    'Sign Out',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red,
+                    ),
                   ),
-                ),
+                ],
               ),
-              //   if (!_isSocketReconnecting)
-              //     Positioned(
-              //       top: 40,
-              //       left: 20,
-              //       child: Container(
-              //         width: 16,
-              //         height: 16,
-              //         decoration: BoxDecoration(
-              //           color: const Color.fromARGB(255, 240, 75, 15),
-              //           shape: BoxShape.circle,
-              //           boxShadow: [
-              //             BoxShadow(
-              //               color: const Color.fromARGB(
-              //                 255,
-              //                 125,
-              //                 3,
-              //                 3,
-              //               ).withOpacity(0.5),
-              //               blurRadius: 8,
-              //               spreadRadius: 2,
-              //             ),
-              //           ],
-              //         ),
-              //       ),
-              //     ),
-            ],
-          ),
-          bottomNavigationBar: Container(
-            decoration: BoxDecoration(
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, -5),
-                ),
-              ],
-            ),
-            child: ConvexAppBar.badge(
-              badgeMargin: const EdgeInsets.only(bottom: 30, right: 40),
-              badgeColor: const Color(0xFFFF5722),
-              badgeTextColor: Colors.white,
-              {0: _getDiscoveryBadgeCount(), 3: _getMessageBadgeCount()},
-              style: TabStyle.titled,
-              backgroundColor: AppEnvironment.lightTheme.primaryColor,
-              activeColor: AppEnvironment.lightTheme.secondaryHeaderColor,
-              color: const Color(0xFF81C784),
-              items: const [
-                TabItem(
-                  icon: Icons.explore_outlined,
-                  activeIcon: Icons.explore,
-                  title: 'Discover',
-                ),
-                TabItem(
-                  icon: Icons.add_circle_outline,
-                  activeIcon: Icons.add_circle,
-                  title: 'Create',
-                ),
-                TabItem(
-                  icon: Icons.map_sharp,
-                  activeIcon: Icons.map_sharp,
-                  title: 'Map',
-                ),
-                TabItem(
-                  icon: Icons.chat_bubble_outline,
-                  activeIcon: Icons.chat_bubble,
-                  title: 'Messages',
-                ),
-                TabItem(
-                  icon: Icons.person_outline,
-                  activeIcon: Icons.person,
-                  title: 'Profile',
-                ),
-              ],
-              initialActiveIndex: _selectedIndex,
-              onTap: _onTabTapped,
             ),
           ),
-        );
-    }
-  }
+        ),
 
-  String _getDiscoveryBadgeCount() => '3';
-  String _getMessageBadgeCount() => '12';
+        actions: [
+          // Show connection status
+      
+        ],
+      ),
+      backgroundColor: const Color(0xFFF8F9FA),
+      body: Stack(
+        children: [
+          FadeTransition(
+            opacity: _fadeAnimation,
+            child: IndexedStack(index: _selectedIndex, children: _getPages()),
+          ),
+
+          Positioned(
+            top: 80,
+            right: 35,
+            child: Container(
+              width: 16,
+              height: 16,
+              decoration: BoxDecoration(
+                color: colorconnction,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: colorconnction.withOpacity(0.5),
+                    blurRadius: 8,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          //   if (!_isSocketReconnecting)
+          //     Positioned(
+          //       top: 40,
+          //       left: 20,
+          //       child: Container(
+          //         width: 16,
+          //         height: 16,
+          //         decoration: BoxDecoration(
+          //           color: const Color.fromARGB(255, 240, 75, 15),
+          //           shape: BoxShape.circle,
+          //           boxShadow: [
+          //             BoxShadow(
+          //               color: const Color.fromARGB(
+          //                 255,
+          //                 125,
+          //                 3,
+          //                 3,
+          //               ).withOpacity(0.5),
+          //               blurRadius: 8,
+          //               spreadRadius: 2,
+          //             ),
+          //           ],
+          //         ),
+          //       ),
+          //     ),
+        ],
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: ConvexAppBar.badge(
+          badgeMargin: const EdgeInsets.only(bottom: 30, right: 40),
+          badgeColor: const Color(0xFFFF5722),
+          badgeTextColor: Colors.white,
+          {0: _getDiscoveryBadgeCount(), 3: _getMessageBadgeCount()},
+          style: TabStyle.titled,
+          backgroundColor: AppEnvironment.lightTheme.primaryColor,
+          activeColor: AppEnvironment.lightTheme.secondaryHeaderColor,
+          color: const Color(0xFF81C784),
+          items: const [
+            TabItem(
+              icon: Icons.explore_outlined,
+              activeIcon: Icons.explore,
+              title: 'Discover',
+            ),
+            TabItem(
+              icon: Icons.add_circle_outline,
+              activeIcon: Icons.add_circle,
+              title: 'Create',
+            ),
+            TabItem(
+              icon: Icons.map_sharp,
+              activeIcon: Icons.map_sharp,
+              title: 'Map',
+            ),
+            TabItem(
+              icon: Icons.chat_bubble_outline,
+              activeIcon: Icons.chat_bubble,
+              title: 'Messages',
+            ),
+            TabItem(
+              icon: Icons.person_outline,
+              activeIcon: Icons.person,
+              title: 'Profile',
+            ),
+          ],
+          initialActiveIndex: _selectedIndex,
+          onTap: _onTabTapped,
+        ),
+      ),
+    );
+  }
 }
+
+String _getDiscoveryBadgeCount() => '3';
+String _getMessageBadgeCount() => '12';

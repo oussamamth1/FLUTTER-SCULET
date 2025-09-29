@@ -20,13 +20,13 @@ import 'package:zenifytrip_guide/pages/profile_page.dart';
 import 'package:zenifytrip_guide/project/routes/app_rout_const.dart';
 import 'package:zenify_auth/zenify_auth.dart';
 import 'package:zenify_auth/zenify_auth.dart' as zenifyAuth;
+import 'package:zenifytrip_guide/service_locator.dart';
 
 class AppRoutConfig {
   /// Returns a GoRouter configured with auth state from Riverpod
   static GoRouter returnRouter(WidgetRef ref) {
-    // Watch the auth state notifier
-
-    final authNotifier = ref.watch(authProvider.notifier);
+    final authNotifier = sl<zenifyAuth.AuthNotifier<zenifyAuth.User>>();
+    final auth = ref.watch(authProvider);
     // final token = ZenifyAuth.getSavedToken();
     // final user = ZenifyAuth.getSavedUser();
     // final cookies = ZenifyAuth.getSavedCookies();
@@ -36,9 +36,63 @@ class AppRoutConfig {
     return GoRouter(
       routes: <RouteBase>[
         GoRoute(
+          name: AppRouteConst.login,
           path: '/',
-          name: AppRouteConst.home,
-          builder: (BuildContext context, GoRouterState state) => HomePage(),
+          builder:
+              (BuildContext context, GoRouterState state) => LoginScreen(
+                minPasswordLength: 5,
+                showLoginwithCode: false,
+                onLoginwithCode: () {
+                  // Handle login with code action
+                  // For example, navigate to a code input screen
+                  // Navigator.of(context).push(
+                  //   MaterialPageRoute(
+                  //     builder: (context) => CodeLoginScreen(),
+                  //   ),
+                  // );
+                  context.go('/loginwithcode');
+                },
+                loginWithCodeText:
+                    'Login with Code', // Optional: customize text
+                loginWithCodeButtonStyle: TextButton.styleFrom(
+                  foregroundColor: Colors.blue,
+                ), // Optional: customize button style
+                backgroundImage:
+                    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTKfP5aLyOd2XJQEwo54_P5a9fM7iOwOZzK4nl6Zj6Ydg2ZKFCbXR1C7hIVEg7iP-mTZ7FXrkpFAoolYClhq4UeAm9AO5W03VNuJSnYPBwcyg",
+                loginButtonText: "Sign In",
+                showSocialLogin: true,
+                accentColor: Colors.amber,
+                socialProviders: [
+                  SocialLoginProvider(
+                    name: 'Google',
+                    icon: Icon(Icons.g_mobiledata, color: Colors.red),
+                    onPressed: () => _handleGoogleLogin(),
+                  ),
+                  SocialLoginProvider(
+                    name: 'Facebook',
+                    icon: Icon(Icons.facebook, color: Colors.white),
+                    onPressed: () => _handleFacebookLogin(),
+                    backgroundColor: Color(0xFF1877F2),
+                    textColor: Colors.white,
+                  ),
+                ],
+                snackBarColor: Colors.green, // ✅ Custom SnackBar color
+                showForgotPassword: true, // ✅ Show Forgot Password
+                canRegister: true,
+                onRegister: () => context.go('/register'),
+                onForgotPassword: () async {
+                  await _showForgotPasswordDialog(context);
+                  // ✅ Your forgot password logic
+                  print("Forgot Password Clicked");
+                  // You can navigate to forgot password screen:
+                  // context.go('/forgot-password');
+                },
+              ),
+
+          //  GoRoute(
+          // path: '/home',
+          //  name: AppRouteConst.home,
+          // builder: (BuildContext context, GoRouterState state) => Lo(),
           routes: <RouteBase>[
             GoRoute(
               name: AppRouteConst.details,
@@ -110,60 +164,61 @@ class AppRoutConfig {
               //   snackBarSuccessColor: Colors.green.shade600,
               // ),
             ),
-            GoRoute(
-              name: AppRouteConst.login,
-              path: '/login',
-              builder:
-                  (BuildContext context, GoRouterState state) => LoginScreen(
-                    minPasswordLength: 5,
-                    showLoginwithCode: false,
-                    onLoginwithCode: () {
-                      // Handle login with code action
-                      // For example, navigate to a code input screen
-                      // Navigator.of(context).push(
-                      //   MaterialPageRoute(
-                      //     builder: (context) => CodeLoginScreen(),
-                      //   ),
-                      // );
-                      context.go('/loginwithcode');
-                    },
-                    loginWithCodeText:
-                        'Login with Code', // Optional: customize text
-                    loginWithCodeButtonStyle: TextButton.styleFrom(
-                      foregroundColor: Colors.blue,
-                    ), // Optional: customize button style
-                    backgroundImage:
-                        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTKfP5aLyOd2XJQEwo54_P5a9fM7iOwOZzK4nl6Zj6Ydg2ZKFCbXR1C7hIVEg7iP-mTZ7FXrkpFAoolYClhq4UeAm9AO5W03VNuJSnYPBwcyg",
-                    loginButtonText: "Sign In",
-                    showSocialLogin: true,
-                    accentColor: Colors.amber,
-                    socialProviders: [
-                      SocialLoginProvider(
-                        name: 'Google',
-                        icon: Icon(Icons.g_mobiledata, color: Colors.red),
-                        onPressed: () => _handleGoogleLogin(),
-                      ),
-                      SocialLoginProvider(
-                        name: 'Facebook',
-                        icon: Icon(Icons.facebook, color: Colors.white),
-                        onPressed: () => _handleFacebookLogin(),
-                        backgroundColor: Color(0xFF1877F2),
-                        textColor: Colors.white,
-                      ),
-                    ],
-                    snackBarColor: Colors.green, // ✅ Custom SnackBar color
-                    showForgotPassword: true, // ✅ Show Forgot Password
-                    canRegister: true,
-                    onRegister: () => context.go('/register'),
-                    onForgotPassword: () async {
-                      await _showForgotPasswordDialog(context);
-                      // ✅ Your forgot password logic
-                      print("Forgot Password Clicked");
-                      // You can navigate to forgot password screen:
-                      // context.go('/forgot-password');
-                    },
-                  ),
-            ),
+
+            // GoRoute(
+            //   name: AppRouteConst.login,
+            //   path: '/',
+            //   builder:
+            //       (BuildContext context, GoRouterState state) => LoginScreen(
+            //         minPasswordLength: 5,
+            //         showLoginwithCode: false,
+            //         onLoginwithCode: () {
+            //           // Handle login with code action
+            //           // For example, navigate to a code input screen
+            //           // Navigator.of(context).push(
+            //           //   MaterialPageRoute(
+            //           //     builder: (context) => CodeLoginScreen(),
+            //           //   ),
+            //           // );
+            //           context.go('/loginwithcode');
+            //         },
+            //         loginWithCodeText:
+            //             'Login with Code', // Optional: customize text
+            //         loginWithCodeButtonStyle: TextButton.styleFrom(
+            //           foregroundColor: Colors.blue,
+            //         ), // Optional: customize button style
+            //         backgroundImage:
+            //             "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTKfP5aLyOd2XJQEwo54_P5a9fM7iOwOZzK4nl6Zj6Ydg2ZKFCbXR1C7hIVEg7iP-mTZ7FXrkpFAoolYClhq4UeAm9AO5W03VNuJSnYPBwcyg",
+            //         loginButtonText: "Sign In",
+            //         showSocialLogin: true,
+            //         accentColor: Colors.amber,
+            //         socialProviders: [
+            //           SocialLoginProvider(
+            //             name: 'Google',
+            //             icon: Icon(Icons.g_mobiledata, color: Colors.red),
+            //             onPressed: () => _handleGoogleLogin(),
+            //           ),
+            //           SocialLoginProvider(
+            //             name: 'Facebook',
+            //             icon: Icon(Icons.facebook, color: Colors.white),
+            //             onPressed: () => _handleFacebookLogin(),
+            //             backgroundColor: Color(0xFF1877F2),
+            //             textColor: Colors.white,
+            //           ),
+            //         ],
+            //         snackBarColor: Colors.green, // ✅ Custom SnackBar color
+            //         showForgotPassword: true, // ✅ Show Forgot Password
+            //         canRegister: true,
+            //         onRegister: () => context.go('/register'),
+            //         onForgotPassword: () async {
+            //           await _showForgotPasswordDialog(context);
+            //           // ✅ Your forgot password logic
+            //           print("Forgot Password Clicked");
+            //           // You can navigate to forgot password screen:
+            //           // context.go('/forgot-password');
+            //         },
+            //       ),
+            // ),
             GoRoute(
               name: AppRouteConst.register,
               path: '/register',
@@ -207,6 +262,12 @@ class AppRoutConfig {
               builder:
                   (BuildContext context, GoRouterState state) => ProfilePage(),
             ),
+            GoRoute(
+              name: AppRouteConst.home,
+              path: 'home',
+              builder:
+                  (BuildContext context, GoRouterState state) => HomePage(),
+            ),
           ],
         ),
       ],
@@ -220,9 +281,29 @@ class AppRoutConfig {
         );
       },
       redirect: (context, state) {
+        final authNotifier = sl<zenifyAuth.AuthNotifier<zenifyAuth.User>>();
         final authState = ref.read(authProvider);
-        final isLoggedIn = (authState.status) == AuthStatus.authenticated;
-        final isLoading = authState.status == AuthStatus.loading;
+        final storage = sl<zenifyAuth.AuthStorage>();
+
+        final token = storage.getToken();
+        final cookie = storage.getCookie();
+      final userData = storage.getUserJson();
+
+        //    authNotifier.setAuthState(
+        //   zenifyAuth.AuthState<zenifyAuth.User>(
+        //     status: zenifyAuth.AuthStatus.authenticated,
+        //     user: userData,
+        //     token: token,
+        //     cookie: cookie,
+        //   ),
+        // );
+        print('✅ S@@@@@@@@ $userData');
+        //   print('✅ Session restored $userData');
+
+        // if (token != null && cookie != null ) {
+
+        final isLoggedIn = token != null;
+        final isLoading = auth.status == zenifyAuth.AuthStatus.loading;
         final currentPath = state.matchedLocation;
 
         final isAuthPage =
@@ -230,13 +311,42 @@ class AppRoutConfig {
             currentPath == '/register' ||
             currentPath == '/loginwithcode';
 
-        if (isLoading) return null;
-        if (!isLoggedIn && !isAuthPage) return '/login';
-        if (isLoggedIn && isAuthPage) return '/';
+        print(
+          '🔍 Redirect check: path=$currentPath, isLoggedIn=$cookie, isLoading=$token',
+        );
+
+        // if (isLoading) {
+        //   print('⏳ Auth still loading...');
+        //   return null;
+        // }
+
+        // if (!isLoggedIn && !isAuthPage) {
+        //   print('🔒 Redirecting to login - user not authenticated');
+        //   return '/login';
+        // }
+
+        // if (isLoggedIn && isAuthPage) {
+        //   print('✅ Redirecting to home - user already authenticated');
+        //   return '/';
+        // }
+
+        if ((cookie != null && token != null)||(auth.status == zenifyAuth.AuthStatus.authenticated) ){
+          print('✅ Redirecting to Rome - user already authenticated');
+  
+          return '/home';
+        }
+        if (cookie == null && token == null) {
+          print('✅ Redirecting to home - user already authenticated');
+          return '/';
+        }
+        print('✓ No redirect needed');
         return null;
       },
-      // Refresh GoRouter when auth state changes
-      refreshListenable: GoRouterRefreshStream(authNotifier.stream),
+      initialLocation: '/',
+      // Remove refreshListenable - ref.watch handles it
+
+      // ✅ FIX: Enable refresh on auth changes
+      //refreshListenable: GoRouterRefreshStream(authNotifier.stream),
     );
   }
 

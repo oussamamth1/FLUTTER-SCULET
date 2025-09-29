@@ -5,6 +5,7 @@ import 'package:zenify_auth/zenify_auth.dart' as zenifyAuth;
 import 'package:go_router/go_router.dart';
 import 'package:zenifytrip_guide/features/ChatModulev2/SocketManagment.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:zenifytrip_guide/service_locator.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -21,19 +22,22 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   late zenifyAuth.AuthState<zenifyAuth.User> user;
+  final storage = sl<zenifyAuth.AuthStorage>();
+  late SocketIOManager socketManager;
+
   @override
   void initState() {
     super.initState();
-    
-    ref.read(zenifyAuth.authProvider.notifier).fetchUserProfile();
+    socketManager = SocketIOManager.instance;
+    //ref.read(zenifyAuth.authProvider.notifier).fetchUserProfile();
 
-user = ref.read(zenifyAuth.authProvider);
+    user = ref.read(zenifyAuth.authProvider);
     final firstName = user.user?.firstName ?? "traveler";
     final lastname = user.user?.username ?? "an unknown place";
     model = FirebaseAI.googleAI().generativeModel(
       model: 'gemini-2.0-flash',
       systemInstruction: Content.text(
-        "You are chatting with user $firstName  $lastname "
+        "You are chatting with user $firstName  $lastname ",
         // "Answer in a friendly and helpful way.",
       ),
     );
@@ -128,7 +132,7 @@ user = ref.read(zenifyAuth.authProvider);
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-return Scaffold(
+    return Scaffold(
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
@@ -598,7 +602,8 @@ return Scaffold(
           ),
         ),
       ),
-    );  }
+    );
+  }
 
   Widget _buildChatMessage(ChatMessage message) {
     return Container(
@@ -647,7 +652,7 @@ return Scaffold(
             CircleAvatar(
               radius: 16,
               backgroundColor: Colors.grey[300],
-                    child: CachedNetworkImage(
+              child: CachedNetworkImage(
                 imageUrl:
                     "https://api.staging.zenifytrip.com/assets/uploads/traveller/${user.user?.picture}",
                 errorWidget:
@@ -690,7 +695,6 @@ return Scaffold(
                       ),
                     ),
               ),
-                     
             ),
           ],
         ],
@@ -815,6 +819,9 @@ return Scaffold(
     );
 
     if (shouldLogout == true) {
+      await storage.clear();
+      //socketManager.disconnect();
+
       await ref.read(zenifyAuth.authProvider.notifier).logout();
       if (mounted) {
         context.go('/login');

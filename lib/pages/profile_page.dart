@@ -824,6 +824,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
       await ref.read(zenifyAuth.authProvider.notifier).logout();
       if (mounted) {
+     
         context.go('/login');
       }
     }

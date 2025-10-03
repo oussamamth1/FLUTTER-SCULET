@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -37,6 +39,8 @@ dependencies:
   hive: ^2.0.0
   sqflite: ^2.3.0
   path: ^1.8.0
+  intl: 0.20.2
+
   hive_flutter: ^1.1.0
   hive_generator: ^2.0.1
   flutter_riverpod: ^2.4.0
@@ -57,6 +61,7 @@ dependencies:
   firebase_ai: ^3.2.0
   flutter_native_splash: ^2.4.6
   get_it: ^8.2.0
+  flutter_i18n: ^0.36.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -74,6 +79,8 @@ dependency_overrides:
     path: C:/Users/oussa/zenify_auth
   socket_io_riverpod:
     path: C:/Users/oussa/socket_io_riverpod
+  network_layer:
+    path: C:/Users/oussa/network_layer
 
     # path: ../auth-lib
 # For information on the generic Dart part of this file, see the
@@ -81,11 +88,14 @@ dependency_overrides:
 
 # The following section is specific to Flutter packages.
 flutter:
+  generate: true
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-
+flutter_gen:
+  integrations:
+    flutter_localizations: true
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/
@@ -94,6 +104,8 @@ flutter:
     - assets/location.png
     - assets/_description_in_202509210044.gif
     - assets/flutter.png
+    - assets/flutter_i18n/
+    - assets/flutter_i18n/fr.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

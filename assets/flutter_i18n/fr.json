@@ -1,0 +1,6 @@
+{
+  "login_email_hint": "Entrez votre email",
+  "login_password_hint": "Entrez votre mot de passe",
+  "login_button": "Se connecter",
+  "login_welcome": "Bienvenue, {name}!"
+}

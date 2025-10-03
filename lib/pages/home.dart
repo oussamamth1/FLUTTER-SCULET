@@ -25,7 +25,13 @@ import 'package:socket_io_riverpod/socket_io_riverpod.dart';
 import 'package:socket_io_riverpod/socket_io_riverpod.dart' as m;
 
 class HomePage extends ConsumerStatefulWidget {
-  const HomePage({super.key});
+  final zenifyAuth.AuthStorage storage;
+  final String? token;
+  final String? cookie;
+  final String? id;
+final User? user;
+
+  const HomePage({super.key, required this.storage, this.token, this.cookie,this.id,this.user});
 
   @override
   ConsumerState<HomePage> createState() => _HomePageState();
@@ -49,54 +55,114 @@ class _HomePageState extends ConsumerState<HomePage>
   // Provide a prompt that contains text
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // _initializeSocket();
+    final storage = widget.storage;
+    final token = widget.token;
+    final cookie = widget.cookie;
+
+     if (token != null && cookie != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        //  _initializeSocketIfAuthenticated();
+        _initializeSocket();
+        // Listen to auth changes
+        // ref.listen(authProvider, (previous, next) {
+        //   if (next.status == zenifyAuth.AuthStatus.authenticated &&
+        //       previous?.status != zenifyAuth.AuthStatus.authenticated) {
+        //     _initializeSocket();
+        //   } else if (next.status == zenifyAuth.AuthStatus.unauthenticated) {
+        //    _initializeSocket();
+        //   }
+        // });
+
+        //   socketManager = SocketIOManager.instance;
+
+        // _initializeSocket();
+        socketManager.addMessageListener((m.ChatMessage message) {
+          print('New message received: ${message.content}');
+          // Handle the message as needed
+          // The message is automatically added to Riverpod state
+        });
+
+        // Add connection state listener
+        // final config = SocketConfig(
+        //   url: 'https://api.staging.zenifytrip.com',
+        //   enableLogging: true,
+        //   token:
+        //       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInN1YiI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInVzZXJuYW1lIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsImVtYWlsIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbmlzdHJhdG9yIiwiZmlyc3ROYW1lIjoiT3Vzc2FtYSIsInBob25lIjoiMjA2NDA3ODMiLCJsYXN0TmFtZSI6Ik1ldGhuYW5pIiwiZXhwaXJlcyI6MTc1ODg5MjQxNywiY3JlYXRlZCI6MTc1ODI4NzYxNywiaWF0IjoxNzU4Mjg3NjE3LCJleHAiOjE3NTg4OTI0MTd9.iySsbRuzF8VPBWWnF7JubVENdQXYgrQj7vxWk4ZIBMA",
+        // );
+
+        // socketManager.configure(
+        //   config,
+        //   headersProvider: () async {
+        //     // final box = await Hive.openBox('cookieBox');
+        //     // final cookie = box.get('ZENIFY_SESSION_ID');
+        //     return {
+        //       if ("s" != null)
+        //         'Cookie':
+        //             'ZENIFY_SESSION_ID=s%3AUx9AGMQc-Jhljlo3wqJA_NDlkh-r_3bl.Uc56ZOF6oHHfXfDBQwMgluyGv9r315kjRbp040myYcI; Path=/; HttpOnly; Expires=Mon, 20 Oct 2025 13:28:26 GMT;',
+        //     };
+        //   },
+        // );
+      });
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
     // _initializeSocket();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-   
-     
-      //  _initializeSocketIfAuthenticated();
-      _initializeSocket();
-      // Listen to auth changes
-      // ref.listen(authProvider, (previous, next) {
-      //   if (next.status == zenifyAuth.AuthStatus.authenticated &&
-      //       previous?.status != zenifyAuth.AuthStatus.authenticated) {
-      //     _initializeSocket();
-      //   } else if (next.status == zenifyAuth.AuthStatus.unauthenticated) {
-      //    _initializeSocket();
-      //   }
-      // });
+    final storage = widget.storage;
+    final token = widget.token;
+    final cookie = widget.cookie;
 
-      //   socketManager = SocketIOManager.instance;
+    // Example: initialize socket only if logged in
+    if (token != null && cookie != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        //  _initializeSocketIfAuthenticated();
+        _initializeSocket();
+        // Listen to auth changes
+        // ref.listen(authProvider, (previous, next) {
+        //   if (next.status == zenifyAuth.AuthStatus.authenticated &&
+        //       previous?.status != zenifyAuth.AuthStatus.authenticated) {
+        //     _initializeSocket();
+        //   } else if (next.status == zenifyAuth.AuthStatus.unauthenticated) {
+        //    _initializeSocket();
+        //   }
+        // });
 
-      // _initializeSocket();
-      socketManager.addMessageListener((m.ChatMessage message) {
-        print('New message received: ${message.content}');
-        // Handle the message as needed
-        // The message is automatically added to Riverpod state
+        //   socketManager = SocketIOManager.instance;
+
+        // _initializeSocket();
+        socketManager.addMessageListener((m.ChatMessage message) {
+          print('New message received: ${message.content}');
+          // Handle the message as needed
+          // The message is automatically added to Riverpod state
+        });
+
+        // Add connection state listener
+        // final config = SocketConfig(
+        //   url: 'https://api.staging.zenifytrip.com',
+        //   enableLogging: true,
+        //   token:
+        //       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInN1YiI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInVzZXJuYW1lIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsImVtYWlsIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbmlzdHJhdG9yIiwiZmlyc3ROYW1lIjoiT3Vzc2FtYSIsInBob25lIjoiMjA2NDA3ODMiLCJsYXN0TmFtZSI6Ik1ldGhuYW5pIiwiZXhwaXJlcyI6MTc1ODg5MjQxNywiY3JlYXRlZCI6MTc1ODI4NzYxNywiaWF0IjoxNzU4Mjg3NjE3LCJleHAiOjE3NTg4OTI0MTd9.iySsbRuzF8VPBWWnF7JubVENdQXYgrQj7vxWk4ZIBMA",
+        // );
+
+        // socketManager.configure(
+        //   config,
+        //   headersProvider: () async {
+        //     // final box = await Hive.openBox('cookieBox');
+        //     // final cookie = box.get('ZENIFY_SESSION_ID');
+        //     return {
+        //       if ("s" != null)
+        //         'Cookie':
+        //             'ZENIFY_SESSION_ID=s%3AUx9AGMQc-Jhljlo3wqJA_NDlkh-r_3bl.Uc56ZOF6oHHfXfDBQwMgluyGv9r315kjRbp040myYcI; Path=/; HttpOnly; Expires=Mon, 20 Oct 2025 13:28:26 GMT;',
+        //     };
+        //   },
+        // );
       });
-
-      // Add connection state listener
-      // final config = SocketConfig(
-      //   url: 'https://api.staging.zenifytrip.com',
-      //   enableLogging: true,
-      //   token:
-      //       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInN1YiI6IjA2Mzk5NWU0LTZmMjQtNGNmYi05YzQwLWU4Y2M4N2I1MTJlZSIsInVzZXJuYW1lIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsImVtYWlsIjoib3Vzc2FtYW1ldGhuYW5pQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbmlzdHJhdG9yIiwiZmlyc3ROYW1lIjoiT3Vzc2FtYSIsInBob25lIjoiMjA2NDA3ODMiLCJsYXN0TmFtZSI6Ik1ldGhuYW5pIiwiZXhwaXJlcyI6MTc1ODg5MjQxNywiY3JlYXRlZCI6MTc1ODI4NzYxNywiaWF0IjoxNzU4Mjg3NjE3LCJleHAiOjE3NTg4OTI0MTd9.iySsbRuzF8VPBWWnF7JubVENdQXYgrQj7vxWk4ZIBMA",
-      // );
-
-      // socketManager.configure(
-      //   config,
-      //   headersProvider: () async {
-      //     // final box = await Hive.openBox('cookieBox');
-      //     // final cookie = box.get('ZENIFY_SESSION_ID');
-      //     return {
-      //       if ("s" != null)
-      //         'Cookie':
-      //             'ZENIFY_SESSION_ID=s%3AUx9AGMQc-Jhljlo3wqJA_NDlkh-r_3bl.Uc56ZOF6oHHfXfDBQwMgluyGv9r315kjRbp040myYcI; Path=/; HttpOnly; Expires=Mon, 20 Oct 2025 13:28:26 GMT;',
-      //     };
-      //   },
-      // );
-    });
+    }
     // socketManager.initialize();
 
     // Add connection state listener
@@ -123,9 +189,9 @@ class _HomePageState extends ConsumerState<HomePage>
     // Get storage from service locator
     final storage = sl<zenifyAuth.AuthStorage>();
 
-    final finalToken = storage.getToken() ?? '';
-    final finalCookie = storage.getCookie() ?? '';
-    final finalUserId = storage.getUserId() ?? '';
+    final finalToken = widget.token?? storage.getToken() ?? '';
+    final finalCookie =  widget.cookie ??storage.getCookie() ?? '';
+    final finalUserId = widget.id ?? storage.getUserId() ?? '';
     socketManager = SocketIOManager.instance;
 
     final config = SocketConfig(
@@ -171,6 +237,7 @@ class _HomePageState extends ConsumerState<HomePage>
       });
     }
   }
+
   Future<void> _showLogoutDialog() async {
     final shouldLogout = await showDialog<bool>(
       context: context,
@@ -220,7 +287,6 @@ class _HomePageState extends ConsumerState<HomePage>
     }
   }
 
-
   @override
   void dispose() {
     _animationController.dispose();
@@ -244,14 +310,14 @@ class _HomePageState extends ConsumerState<HomePage>
         const DiscoveryPage(),
         ConversationsScreen(
           initialConversationId: "c153a884-ebb1-41eb-99cb-2b465491430b",
-          currentUserId: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
+          currentUserId:widget.id,
         ),
         // TaskListPage(),
         const MapLoadingIndicator(), // Placeholder for map
-        const ChatScreen(
+         ChatScreen(
           conversationId: 'c153a884-ebb1-41eb-99cb-2b465491430b',
           conversationName: 'Team Chat',
-          currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
+          currentUserID: widget.id??"",
         ),
         ProfilePage(),
       ];
@@ -259,19 +325,19 @@ class _HomePageState extends ConsumerState<HomePage>
 
     return [
       const DiscoveryPage(),
-      ConversationsScreen(
-        initialConversationId: "c153a884-ebb1-41eb-99cb-2b465491430b",
-        currentUserId: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
-      ),
-      //TaskListPage(),
+      // ConversationsScreen(
+      //   initialConversationId: "c153a884-ebb1-41eb-99cb-2b465491430b",
+      //   currentUserId:widget.id,
+      // ),
+      TaskListPage(),
       p.ChangeNotifierProvider.value(
         value: _locationProvider!,
         child: const MapScreenContent(),
       ),
       //  MapScreenContent(),
-      const ChatScreen(
+       ChatScreen(
         conversationId: 'c153a884-ebb1-41eb-99cb-2b465491430b',
-        currentUserID: "063995e4-6f24-4cfb-9c40-e8cc87b512ee",
+        currentUserID:widget.id??"",
         conversationName: 'Team Chat',
       ),
 
@@ -314,10 +380,10 @@ class _HomePageState extends ConsumerState<HomePage>
       // );
 
       // Initialize location provider only once when authenticated
-      if (authState.status == AuthStatus.authenticated &&
-          !_locationInitialized &&
-          authState.user?.picture != null) {
-        _initializeLocationProvider(authState.user!.picture!);
+      if (
+          !_locationInitialized&& 
+          widget.user?.picture != null) {
+        _initializeLocationProvider(widget.user!.picture!);
       }
     });
 
@@ -326,7 +392,7 @@ class _HomePageState extends ConsumerState<HomePage>
         title: Container(
           width: 20,
           height: 20,
-         
+
           child: Material(
             color: Colors.transparent,
             child: InkWell(
@@ -338,7 +404,7 @@ class _HomePageState extends ConsumerState<HomePage>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.logout, color: Colors.red),
-                
+
                   Text(
                     'Sign Out',
                     style: TextStyle(
@@ -355,7 +421,6 @@ class _HomePageState extends ConsumerState<HomePage>
 
         actions: [
           // Show connection status
-      
         ],
       ),
       backgroundColor: const Color(0xFFF8F9FA),

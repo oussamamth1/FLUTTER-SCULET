@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart' as pro;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:zenifytrip_guide/MultiPackageTranslationLoader.dart';
 import 'package:zenifytrip_guide/env.dart';
 import 'package:zenifytrip_guide/features/ChatModulev2/SocketManagment.dart';
 import 'package:zenifytrip_guide/features/auth/presentation/providers/auth_provider.dart';
@@ -35,6 +36,37 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_i18n/flutter_i18n.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart' as storage;
+
+class CommonI18n {
+  static final _delegate = FlutterI18nDelegate(
+    translationLoader: NamespaceFileTranslationLoader(
+      namespaces: ["tr_en", "tr_fr"],
+      separator: "_",
+      basePath: "packages/zt_common_i18n/assets/flutter_i18n",
+      useCountryCode: false,
+    ),
+  );
+
+  static String translate(BuildContext context, String key) {
+    // This is problematic because FlutterI18n uses a global key
+    // You'd need to implement your own translation loading
+    return FlutterI18n.translate(context, key);
+  }
+}
+
+class AuthI18n {
+  static final _delegates = FlutterI18nDelegate(
+    translationLoader: FileTranslationLoader(
+      basePath: "packages/zenify_auth/assets/flutter_i18n",
+      fallbackFile: "en",
+      useCountryCode: false,
+    ),
+  );
+
+  static String translate(BuildContext context, String key) {
+    return FlutterI18n.translate(context, key);
+  }
+}
 
 String? initialToken;
 String? initialCookie;
@@ -225,7 +257,7 @@ class TestApiWrapper extends ConsumerWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: "ZenifyTrip Test API",
-      locale: const Locale('en'), // 🌍 Change to Locale('en') or Locale('ar')
+      locale: const Locale('fr'), // 🌍 Change to Locale('en') or Locale('ar')
       supportedLocales: const [Locale('en'), Locale('ar'), Locale('fr')],
       localizationsDelegates: [
         // FlutterI18nDelegate(
@@ -235,13 +267,13 @@ class TestApiWrapper extends ConsumerWidget {
         //     useCountryCode: false,
         //   ),
         // ),
-        FlutterI18nDelegate(
-          translationLoader: FileTranslationLoader(
-            basePath: "assets/flutter_i18n",
-            // fallbackFile: 'en',
-            // useCountryCode: false,
-          ),
-        ),
+        // FlutterI18nDelegate(
+        //   translationLoader: FileTranslationLoader(
+        //     basePath: "assets/flutter_i18n",
+        //     // fallbackFile: 'en',
+        //     // useCountryCode: false,
+        //   ),
+        // ),
         // FlutterI18nDelegate(
         //   translationLoader: NamespaceFileTranslationLoader(
         //     namespaces: ["fr", "en"],
@@ -250,17 +282,44 @@ class TestApiWrapper extends ConsumerWidget {
         //   ),
         // ),
         // Localization from network_layer (if defined)
-        layer.AppLocalizations.delegate,
-        // Localization from auth module (if used)
-        // zenifyAuth.commonI18nDelegate(),
-        zt_common_i18n.commonI18nDelegate(),
+        // layer.AppLocalizations.delegate,
+        // // Localization from auth module (if used)
         FlutterI18nDelegate(
-          translationLoader: FileTranslationLoader(
-            basePath: "packages/zenify_auth/assets/flutter_i18n",
+          translationLoader: MultiPackageTranslationLoader(
+            basePaths: [
+              "packages/zt_common_i18n/assets/flutter_i18n",
+              "packages/zenify_auth/assets/flutter_i18n",
+              "assets/flutter_i18n", // Your main app translations
+            ],
             fallbackFile: "en",
             useCountryCode: false,
           ),
         ),
+
+        // FlutterI18nDelegate(
+        //   translationLoader: FileTranslationLoader(
+        //     basePath: "packages/zt_common_i18n/assets/flutter_i18n",
+        //     // fallbackFile: "en",
+        //     // useCountryCode: false,
+        //   ),
+        // ),
+        // FlutterI18nDelegate(
+        //   translationLoader: FileTranslationLoader(
+        //     basePath: "packages/zenify_auth/assets/flutter_i18n",
+        //     fallbackFile: "en",
+        //     useCountryCode: false,
+        //   ),
+        //  ),
+        // FlutterI18nDelegate(
+        //   translationLoader: NamespaceFileTranslationLoader(
+        //     namespaces: ["tr_en", "tr_fr"],
+        //     //  separator: "_",
+        //     basePath: "packages/zt_common_i18n/assets/flutter_i18n",
+        //     useCountryCode: false,
+        //   ),
+        // ),
+        // CommonI18n._delegate,
+        // AuthI18n._delegates,
         // Flutter built-in
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

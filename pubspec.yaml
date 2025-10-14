@@ -113,7 +113,9 @@ flutter:
     - packages/zenify_auth/assets/flutter_i18n/en.json
     - packages/zenify_auth/assets/flutter_i18n/fr.json
     - packages/zt_common_i18n/assets/flutter_i18n/en.json
+    - packages/zt_common_i18n/assets/flutter_i18n/en/tr_en.json
     - packages/zt_common_i18n/assets/flutter_i18n/fr.json
+    - packages/zt_common_i18n/assets/flutter_i18n/fr/tr_fr.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

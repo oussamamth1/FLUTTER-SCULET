@@ -6,9 +6,11 @@ import 'package:socket_io_riverpod/socket_io_riverpod.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:zenifytrip_guide/AuthListenable%20.dart';
+
 import 'package:zenifytrip_guide/GoRouterRefreshStream.dart';
 import 'package:socket_io_riverpod/socket_io_riverpod.dart';
+import 'package:zenifytrip_guide/authlisener.dart';
+
 
 import 'package:zenifytrip_guide/env.dart';
 import 'package:zenifytrip_guide/pages/CodeLoginScreen.dart';
@@ -132,8 +134,17 @@ class AppRoutConfig {
               builder:
                   (BuildContext context, GoRouterState state) => LoginScreen(
                     // passwordLabel: "hi",
+                    passwordDecoration: InputDecoration(
+                      labelStyle: TextStyle(color: Colors.amberAccent),
+                      // prefixIcon: const Icon(Icons.ey),
+                      hintStyle: TextStyle(
+                        color: const Color.fromARGB(255, 72, 50, 43),
+                      ),
+                      filled: true,
+                      fillColor: const Color.fromARGB(255, 116, 175, 201),
+                    ),
                     emailDecoration: InputDecoration(
-                      //hintText: 'Email s',
+                      //    hintText: 'Email s',
                       hintStyle: TextStyle(
                         color: const Color.fromARGB(255, 222, 65, 18),
                       ),
@@ -141,7 +152,7 @@ class AppRoutConfig {
                       prefixIcon: const Icon(Icons.email_outlined),
                       border: const OutlineInputBorder(),
 
-                      //fillColor: const Color.fromARGB(255, 185, 181, 177),
+                      fillColor: const Color.fromARGB(255, 163, 165, 166),
 
                       // border: OutlineInputBorder(
                       //   borderRadius: BorderRadius.circular(12),
@@ -160,7 +171,7 @@ class AppRoutConfig {
                       // );
                       context.go('/loginwithcode');
                     },
-                    title: 'hello',
+                    title: AppLocalizations.of(context)?.localeName,
                     loginWithCodeText:
                         'Login with Code', // Optional: customize text
                     loginWithCodeButtonStyle: TextButton.styleFrom(
@@ -278,7 +289,7 @@ class AppRoutConfig {
         }
         return null;
       },
-      // Refresh GoRouter when auth state changes
+      // // Refresh GoRouter when auth state changes
       refreshListenable: AuthListenable(ref),
       initialLocation: '/',
     );

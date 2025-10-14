@@ -47,7 +47,7 @@ class _HomePageState extends ConsumerState<HomePage>
 
   LocationProvider? _locationProvider;
   bool _locationInitialized = false;
-  final taskService = TaskService();
+  //final taskService = TaskService();
 
   // Socket state
   bool _isSocketReconnecting = false;
@@ -329,7 +329,7 @@ class _HomePageState extends ConsumerState<HomePage>
       //   initialConversationId: "c153a884-ebb1-41eb-99cb-2b465491430b",
       //   currentUserId:widget.id,
       // ),
-      TaskListPage(),
+      // TaskListPage(),
       p.ChangeNotifierProvider.value(
         value: _locationProvider!,
         child: const MapScreenContent(),

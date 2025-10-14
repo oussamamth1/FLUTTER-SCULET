@@ -1,6 +1,7 @@
 {
-  "login_email_hint": "Enter your email",
-  "login_password_hint": "Enter your password",
+  "login_email": "Enter votre email",
+  "login_password_hint": "Enter votre password",
   "login_button": "Login",
-  "login_welcome": "Welcome, {name}!"
+  "login_welcome": "Welcome, {name}!",
+  "fard": "fad from package fr"
 }

@@ -7,6 +7,8 @@ import 'package:zenify_auth/zenify_auth.dart' as auth;
 class AuthListenable extends ChangeNotifier {
   AuthListenable(WidgetRef ref) {
     ref.listen<auth.AuthState<auth.User>>(
-      auth.authProvider, (_, __) => notifyListeners());
+      auth.authProvider,
+      (_, __) => notifyListeners(),
+    );
   }
 }

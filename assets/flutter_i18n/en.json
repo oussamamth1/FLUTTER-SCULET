@@ -2,5 +2,6 @@
   "login_email_hint": "Enter your email",
   "login_password_hint": "Enter your password",
   "login_button": "Login",
-  "login_welcome": "Welcome, {name}!"
+  "login_welcome": "Welcome, {name}!",
+  "auth_login_email": "Enter your email"
 }
